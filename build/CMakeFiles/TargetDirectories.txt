@@ -1,0 +1,5 @@
+/home/liusida/simulator/Voxelyze.Ti/build/CMakeFiles/rebuild_cache.dir
+/home/liusida/simulator/Voxelyze.Ti/build/CMakeFiles/edit_cache.dir
+/home/liusida/simulator/Voxelyze.Ti/build/CMakeFiles/Voxelyze.Ti.dir
+/home/liusida/simulator/Voxelyze.Ti/build/CMakeFiles/package_source.dir
+/home/liusida/simulator/Voxelyze.Ti/build/CMakeFiles/package.dir
