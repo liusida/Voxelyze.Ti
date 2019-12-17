@@ -1,4 +1,5 @@
 # Voxelyze.Ti
+
 Attempt to GPUlize Voxelyze
 
 ## Build and Run
@@ -11,6 +12,8 @@ make -j8
 ./Voxelyze.Ti
 ```
 
-## Prerequisites
+## Dev Environment
 
-CUDA 10+
+Ubuntu 19.10
+CUDA 10.1
+
