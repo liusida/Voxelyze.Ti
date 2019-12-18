@@ -17,3 +17,8 @@ make -j8
 Ubuntu 19.10
 CUDA 10.1
 
+## Framework of Voxelyze
+
+The main stage is CVoxelyze. Two main concepts are Link and Voxel.
+
+![Link Voxel](doc/framework.png)
