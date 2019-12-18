@@ -1,6 +1,6 @@
 # Voxelyze.Ti
 
-Attempt to GPUlize Voxelyze
+Attempt to GPUlize Voxelyze. 96.16% of runtime spend on the function `CVX_Link::updateForces`, so if we can move this part to GPU...
 
 ## Build and Run
 
