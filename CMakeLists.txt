@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.1.0)
-set(ENV{CMAKE_BUILD_PARALLEL_LEVEL} 8)  # building with multiple CPU cores, saving life.
+#set(CMAKE_CUDA_COMPILER "/usr/local/cuda/bin/nvcc")
+#set(CUDA_TOOLKIT_ROOT_DIR "/usr/local/cuda")
 
 project(Voxelyze.Ti VERSION 0.1.0 LANGUAGES CXX CUDA)
 
