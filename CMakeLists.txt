@@ -5,8 +5,8 @@ cmake_minimum_required(VERSION 3.1.0)
 project(Voxelyze.Ti VERSION 0.1.0 LANGUAGES CXX CUDA)
 
 message(${CMAKE_CURRENT_LIST_DIR})
-set(INCLUDE_DIR ${CMAKE_CURRENT_LIST_DIR}/include)
-set(SRC_DIR ${CMAKE_CURRENT_LIST_DIR}/src/*.c*)
+set(INCLUDE_DIR ${CMAKE_CURRENT_LIST_DIR}/include/VX)
+set(SRC_DIR ${CMAKE_CURRENT_LIST_DIR}/src/VX/*.c*)
 file(GLOB SRC_FILES ${SRC_DIR})
 
 set(TI_INCLUDE_DIR ${CMAKE_CURRENT_LIST_DIR}/include/Ti)
