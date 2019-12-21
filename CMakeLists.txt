@@ -4,7 +4,8 @@ cmake_minimum_required(VERSION 3.1.0)
 
 project(Voxelyze.Ti VERSION 0.1.0 LANGUAGES CXX CUDA)
 
-message(${CMAKE_CURRENT_LIST_DIR})
+set(CMAKE_CXX_STANDARD 14) # set C++ standard to C++14
+
 set(INCLUDE_DIR ${CMAKE_CURRENT_LIST_DIR}/include/VX)
 set(SRC_DIR ${CMAKE_CURRENT_LIST_DIR}/src/VX/*.c*)
 file(GLOB SRC_FILES ${SRC_DIR})
@@ -16,6 +17,7 @@ file(GLOB TI_SRC_FILES ${TI_SRC_DIR})
 # enable_testing()
 
 add_executable(Voxelyze.Ti main.cu ${SRC_FILES} ${TI_SRC_FILES})
+set_target_properties(Voxelyze.Ti PROPERTIES CUDA_SEPARABLE_COMPILATION ON) # needed for library compilation
 target_include_directories(Voxelyze.Ti PUBLIC ${INCLUDE_DIR} ${TI_INCLUDE_DIR})
 
 # set(CPACK_PROJECT_NAME ${PROJECT_NAME})

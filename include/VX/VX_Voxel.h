@@ -138,7 +138,7 @@ public:
 
 
 
-private:
+public:
 	typedef int voxState;
 	enum voxFlags { //default of each should be zero for easy clearing
 		SURFACE = 1<<1, //on the surface?

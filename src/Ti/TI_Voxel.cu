@@ -1,5 +1,6 @@
 #include "TI_Voxel.h"
 
-CTI_Voxel::CTI_Voxel(/* args */)
-{
+TI_Voxel::TI_Voxel(CVX_Voxel* p) {
+    _voxel = p;
+    pos = p->pos;
 }

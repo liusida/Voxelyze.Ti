@@ -66,7 +66,7 @@ class CVX_Link {
 	void updateTransverseInfo(); //!< Updates information about this voxel pertaining to volumetric deformations. Call this every timestep if the poisson's ratio of the link material is non-zero.
 
 
-private:
+public:
 	CVX_Voxel* pVNeg, *pVPos; //voxels in the negative
 	Vec3D<> forceNeg, forcePos;
 	Vec3D<> momentNeg, momentPos;

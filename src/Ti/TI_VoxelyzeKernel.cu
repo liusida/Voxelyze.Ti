@@ -6,15 +6,29 @@
 TI_VoxelyzeKernel::TI_VoxelyzeKernel( CVoxelyze* vx )
 {
     _vx = vx;
+    for (auto voxel: vx->voxelsList) {
+        //alloc a GPU memory space
+        TI_Voxel * d_voxel;
+        gpuErrchk(cudaMalloc((void **) &d_voxel, sizeof(TI_Voxel)));
+        //set values for GPU memory space
+        TI_Voxel temp = TI_Voxel(voxel);
+        gpuErrchk(cudaMemcpy(d_voxel, &temp, sizeof(TI_Voxel), cudaMemcpyHostToDevice));
+        //save the pointer
+        d_voxels.push_back(d_voxel);
+        //save host pointer as well
+        h_voxels.push_back(voxel);
+    }
     for (auto link: vx->linksList) {
         //alloc a GPU memory space
         TI_Link * d_link;
         gpuErrchk(cudaMalloc((void **) &d_link, sizeof(TI_Link)));
         //set values for GPU memory space
-        TI_Link temp = TI_Link(link);
+        TI_Link temp = TI_Link(link, this);
         gpuErrchk(cudaMemcpy(d_link, &temp, sizeof(TI_Link), cudaMemcpyHostToDevice));
         //save the pointer
         d_links.push_back(d_link);
+        //save host pointer as well
+        h_links.push_back(link);
     }
 }
 
@@ -47,12 +61,17 @@ void TI_VoxelyzeKernel::simpleGPUFunction() {
     std::cout << std::endl;
 }
 
-__global__ void gpu_update_force(TI_Link** links, int num) {
+__global__
+void gpu_update_force(TI_Link** links, int num) {
     int gindex = threadIdx.x + blockIdx.x * blockDim.x; 
     if (gindex < num) {
         //TODO: update force for links[gindex];
         TI_Link* t = links[gindex];
-        printf("GPU strain: %f\n", t->strain);
+        
+        printf("GPU pos2: %f, %f, %f\n", t->pos2.x, t->pos2.y, t->pos2.z);
+        printf("GPU pVPos pos: %f, %f, %f\n", t->pVPos->pos.x, t->pVPos->pos.y, t->pVPos->pos.z );
+        t->test();
+        t->updateForces();
     }
 }
 void TI_VoxelyzeKernel::doTimeStep(double dt) {

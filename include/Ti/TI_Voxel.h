@@ -1,15 +1,21 @@
 #if !defined(TI_VOXEL_H)
 #define TI_VOXEL_H
 
-#include "TI_Material.h"
+#include "VX_Voxel.h"
+#include "TI_Utils.h"
 
-class CTI_Voxel
+class TI_Voxel
 {
 public:
-    CTI_Voxel();
-	//CTI_Voxel(CTI_MaterialVoxel* material, short indexX, short indexY, short indexZ); //!< Default constuctor. @param [in] material Links this CVX_Material to define the physical properties for this voxel. @param[in] indexX The global X index of this voxel. @param[in] indexY The global Y index of this voxel. @param[in] indexZ The global Z index of this voxel.
-private:
-    /* data */
+    TI_Voxel(CVX_Voxel* p);
+
+	CUDA_CALLABLE_MEMBER Vec3D<double> position() const {return pos;} //!< Returns the center position of this voxel in meters (GCS). This is the origin of the local coordinate system (LCS).
+
+/* data */
+    CVX_Voxel* _voxel;
+    
+    Vec3D<double> pos;
+
 };
 
 #endif // TI_VOXEL_H

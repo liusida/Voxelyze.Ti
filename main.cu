@@ -20,10 +20,11 @@ int main(int, char**) {
     Vx.doTimeStep(0.001);
     Vx.doTimeStep(0.001);
     Vx.doTimeStep(0.001);
-    for (int i=0;i<2;i++) {
-        auto l = Vx.link(i);
-        printf("Host: strain: %f \n", l->axialStrain());
-    }
+    // for (int i=0;i<2;i++) {
+    //     auto t = Vx.link(i);
+    //     printf("Host pos2: %f, %f, %f\n", t->pos2.x, t->pos2.y, t->pos2.z);
+    //     printf("HOST pVPos pos: %f, %f, %f\n", t->pVPos->pos.x, t->pVPos->pos.y, t->pVPos->pos.z );
+    // }
     TI_VoxelyzeKernel VxKernel(&Vx);
     VxKernel.simpleGPUFunction();
 
