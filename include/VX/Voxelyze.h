@@ -27,6 +27,8 @@ class CVX_MaterialVoxel;
 class CVX_MaterialLink;
 class CVX_Collision;
 
+class TI_Voxelyze;
+
 //! Defines and simulates a configuration of voxels.
 /*!
 The primary user-accesible concepts of Voxelyze are materials, voxels, and links.
@@ -183,6 +185,7 @@ private:
 	bool writeJSON(rapidjson::PrettyWriter<rapidjson::StringBuffer>& w);
 	bool readJSON(rapidjson::Value& vxl);
 
+	friend class TI_VoxelyzeKernel;
 };
 
 

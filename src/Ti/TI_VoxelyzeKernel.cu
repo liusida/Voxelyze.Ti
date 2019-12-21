@@ -2,12 +2,15 @@
 
 #include "TI_VoxelyzeKernel.h"
 
-CTI_VoxelyzeKernel::CTI_VoxelyzeKernel( CVoxelyze* vx )
+TI_VoxelyzeKernel::TI_VoxelyzeKernel( CVoxelyze* vx )
 {
     _vx = vx;
+    for (auto link: vx->linksList) {
+        _linksList.push_back(new TI_Link(link));
+    }
 }
 
-CTI_VoxelyzeKernel::~CTI_VoxelyzeKernel()
+TI_VoxelyzeKernel::~TI_VoxelyzeKernel()
 {
 }
 
@@ -18,7 +21,7 @@ __global__ void gpu_function_1(int* a, int num) {
     }
 }
 
-void CTI_VoxelyzeKernel::simpleGPUFunction() {
+void TI_VoxelyzeKernel::simpleGPUFunction() {
     int* d_a;
     int* a;
     int num = 10;
@@ -36,6 +39,6 @@ void CTI_VoxelyzeKernel::simpleGPUFunction() {
     std::cout << std::endl;
 }
 
-void CTI_VoxelyzeKernel::doTimeStep(double dt) {
+void TI_VoxelyzeKernel::doTimeStep(double dt) {
 
 }
