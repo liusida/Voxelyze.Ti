@@ -15,8 +15,15 @@ int main(int, char**) {
     // }
 
     Voxel1->external()->setFixedAll(); //Fixes all 6 degrees of freedom with an external condition on Voxel 1
-    Voxel3->external()->setForce(0, 0, 1); //pulls Voxel 3 downward with 1 Newton of force.
+    Voxel3->external()->setForce(1, 0, 0); //pulls Voxel 3 downward with 1 Newton of force.
 
+    Vx.doTimeStep(0.001);
+    Vx.doTimeStep(0.001);
+    Vx.doTimeStep(0.001);
+    for (int i=0;i<2;i++) {
+        auto l = Vx.link(i);
+        printf("Host: strain: %f \n", l->axialStrain());
+    }
     TI_VoxelyzeKernel VxKernel(&Vx);
     VxKernel.simpleGPUFunction();
 

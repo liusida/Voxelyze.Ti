@@ -18,7 +18,7 @@ See <http://www.opensource.org/licenses/lgpl-3.0.html> for license details.
 
 class CVX_Voxel;
 class CVX_MaterialLink;
-
+class TI_Link;
 
 
 //!Defines a solid link between two adjacent voxels and holds its current state
@@ -120,6 +120,7 @@ private:
 	friend class CVoxelyze;
 	friend class CVX_LinearSolver;
 	friend class CVXS_SimGLView; //TEMPORARY
+	friend class TI_Link;
 };
 
 

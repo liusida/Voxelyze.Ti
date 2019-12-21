@@ -12,6 +12,8 @@ public:
     ~TI_Link();
 
     CVX_Link* _link;
+	float strain;
+
 };
 
 

@@ -1,6 +1,8 @@
 #if !defined(TI_VOXELYZE_KERNEL_H)
 #define TI_VOXELYZE_KERNEL_H
 
+#include <thrust/device_vector.h>
+
 #include "TI_Link.h"
 #include "Voxelyze.h"
 
@@ -16,7 +18,7 @@ public:
     void simpleGPUFunction();
 
     CVoxelyze* _vx;
-    std::vector<TI_Link* > _linksList;
+    thrust::device_vector<TI_Link *> d_links;
 };
 
 

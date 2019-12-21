@@ -15,7 +15,7 @@ file(GLOB TI_SRC_FILES ${TI_SRC_DIR})
 # include(CTest)
 # enable_testing()
 
-add_executable(Voxelyze.Ti main.cpp ${SRC_FILES} ${TI_SRC_FILES})
+add_executable(Voxelyze.Ti main.cu ${SRC_FILES} ${TI_SRC_FILES})
 target_include_directories(Voxelyze.Ti PUBLIC ${INCLUDE_DIR} ${TI_INCLUDE_DIR})
 
 # set(CPACK_PROJECT_NAME ${PROJECT_NAME})

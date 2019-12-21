@@ -1,12 +1,20 @@
 #include <iostream>
 
 #include "TI_VoxelyzeKernel.h"
+#include "TI_Utils.h"
 
 TI_VoxelyzeKernel::TI_VoxelyzeKernel( CVoxelyze* vx )
 {
     _vx = vx;
     for (auto link: vx->linksList) {
-        _linksList.push_back(new TI_Link(link));
+        //alloc a GPU memory space
+        TI_Link * d_link;
+        gpuErrchk(cudaMalloc((void **) &d_link, sizeof(TI_Link)));
+        //set values for GPU memory space
+        TI_Link temp = TI_Link(link);
+        gpuErrchk(cudaMemcpy(d_link, &temp, sizeof(TI_Link), cudaMemcpyHostToDevice));
+        //save the pointer
+        d_links.push_back(d_link);
     }
 }
 
@@ -39,6 +47,17 @@ void TI_VoxelyzeKernel::simpleGPUFunction() {
     std::cout << std::endl;
 }
 
+__global__ void gpu_update_force(TI_Link** links, int num) {
+    int gindex = threadIdx.x + blockIdx.x * blockDim.x; 
+    if (gindex < num) {
+        //TODO: update force for links[gindex];
+        TI_Link* t = links[gindex];
+        printf("GPU strain: %f\n", t->strain);
+    }
+}
 void TI_VoxelyzeKernel::doTimeStep(double dt) {
-
+    int blockSize = 256;
+    int N = d_links.size();
+    int gridSize = (N + blockSize - 1) / blockSize;
+    gpu_update_force<<<gridSize, blockSize>>>(thrust::raw_pointer_cast(d_links.data()), N);
 }
