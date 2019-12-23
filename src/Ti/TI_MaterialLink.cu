@@ -1,5 +1,15 @@
 #include "TI_MaterialLink.h"
 
+TI_MaterialLink::TI_MaterialLink(CVX_MaterialLink* p):
+TI_MaterialVoxel((CVX_MaterialVoxel *)p),
+_a1(p->_a1), _a2(p->_a2), _b1(p->_b1), _b2(p->_b2), _b3(p->_b3),
+_sqA1(p->_sqA1), _sqA2xIp(p->_sqA2xIp), _sqB1(p->_sqB1), 
+_sqB2xFMp(p->_sqB2xFMp), _sqB3xIp(p->_sqB3xIp) {
+	vox1Mat = new TI_MaterialVoxel(p->vox1Mat);
+	vox2Mat = new TI_MaterialVoxel(p->vox2Mat);
+	//TODO: please remember to free all newly allocated memory after the program works.
+}
+
 CUDA_CALLABLE_MEMBER TI_MaterialLink::TI_MaterialLink(TI_MaterialVoxel* mat1, TI_MaterialVoxel* mat2)
 {
 	vox1Mat = mat1;

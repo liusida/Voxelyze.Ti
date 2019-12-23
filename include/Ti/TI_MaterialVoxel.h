@@ -1,11 +1,15 @@
 #if !defined(TI_MATERIALVOXEL_H)
 #define TI_MATERIALVOXEL_H
 
+#include "TI_Utils.h"
+#include "VX_MaterialVoxel.h"
 #include "TI_Material.h"
 
 
 class TI_MaterialVoxel : public TI_Material {
 public:
+	TI_MaterialVoxel( CVX_MaterialVoxel *p );
+
 	CUDA_CALLABLE_MEMBER TI_MaterialVoxel(float youngsModulus=1e6f, float density=1e3f, double nominalSize=0.001); //!< Default Constructor. @param[in] youngsModulus The Young's Modulus (stiffness) of this material in Pascals. @param[in] density The density of this material in Kg/m^3. @param[in] nominalSize The nominal voxel size in meters.
 	CUDA_CALLABLE_MEMBER TI_MaterialVoxel(const TI_Material& mat, double nominalSize=0.001); //!< Constructs from an existing material. @param[in] mat Material to construct from. @param[in] nominalSize The nominal voxel size in meters
 	//virtual ~TI_MaterialVoxel(void); //!< Destructor. Virtual so we can just keep track of TI_Material pointers.

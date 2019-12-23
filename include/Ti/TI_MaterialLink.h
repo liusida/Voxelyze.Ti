@@ -1,11 +1,14 @@
 #if !defined(TI_MATERIAL_LINK_H)
 #define TI_MATERIAL_LINK_H
 
+#include "TI_Utils.h"
 #include "VX_MaterialLink.h"
 #include "TI_MaterialVoxel.h"
 
 class TI_MaterialLink : public TI_MaterialVoxel {
 public:
+	TI_MaterialLink(CVX_MaterialLink* p);
+
 	CUDA_CALLABLE_MEMBER TI_MaterialLink(TI_MaterialVoxel* mat1, TI_MaterialVoxel* mat2); //!< Creates a link material from the two specified voxel materials. The order is unimportant. @param[in] mat1 voxel material on one side of the link. @param[in] mat2 voxel material on the other side of the link.
 	CUDA_CALLABLE_MEMBER TI_MaterialLink(const TI_MaterialLink& VIn) {*this = VIn;} //!< Copy constructor
 	CUDA_CALLABLE_MEMBER virtual TI_MaterialLink& operator=(const TI_MaterialLink& VIn); //!< Equals operator

@@ -1,5 +1,14 @@
 #include "TI_Material.h"
 
+TI_Material::TI_Material( CVX_Material* p ):
+linear(p->linear), E(p->E), sigmaYield(p->sigmaYield), sigmaFail(p->sigmaFail),
+epsilonYield(p->epsilonYield), epsilonFail(p->epsilonFail), nu(p->nu),rho(p->rho),
+alphaCTE(p->alphaCTE), muStatic(p->muStatic), muKinetic(p->muKinetic),
+zetaInternal(p->zetaInternal), zetaGlobal(p->zetaGlobal), zetaCollision(p->zetaCollision),
+_eHat(p->_eHat) {
+
+}
+
 CUDA_CALLABLE_MEMBER TI_Material::TI_Material(float youngsModulus, float density)
 {
 	clear();

@@ -11,6 +11,8 @@ TI_Link::TI_Link(CVX_Link* p, TI_VoxelyzeKernel* k)
     pVNeg = getGPUPointer(p->pVNeg);
     pVPos = getGPUPointer(p->pVPos);
 
+	mat = new TI_MaterialLink(p->mat);
+	
     strain = p->strain;
     pos2 = p->pos2;
 }
@@ -118,13 +120,17 @@ CUDA_CALLABLE_MEMBER void TI_Link::updateForces()
 	TI_Vec3D<double> dAngle1 = 0.5*(angle1v-oldAngle1v);
 	TI_Vec3D<double> dAngle2 = 0.5*(angle2v-oldAngle2v);
 
-	currentTransverseStrainSum != 0;
+	bool b = currentTransverseStrainSum != 0;
 	printf("---> 3\n");
-
+	bool a = mat->isXyzIndependent();
+	printf("---> 4\n");
+	if (!a || b) {
+		printf("--->6\n");
+	}
 	//if volume effects...
 	if (!mat->isXyzIndependent() || currentTransverseStrainSum != 0) { //currentTransverseStrainSum != 0 catches when we disable poissons mid-simulation
 		printf("---> 4\n");
-		updateTransverseInfo(); 
+		//updateTransverseInfo(); 
 	}
 	printf("---> 5\n");
 

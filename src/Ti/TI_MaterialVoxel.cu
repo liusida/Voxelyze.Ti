@@ -1,5 +1,14 @@
 #include "TI_MaterialVoxel.h"
 
+TI_MaterialVoxel::TI_MaterialVoxel( CVX_MaterialVoxel *p ):
+TI_Material( (CVX_Material*) p ),
+nomSize(p->nomSize), gravMult(p->gravMult),_mass(p->_mass),
+_massInverse(p->_massInverse), _sqrtMass(p->_sqrtMass), _firstMoment(p->_firstMoment),
+_momentInertia(p->_momentInertia), _momentInertiaInverse(p->_momentInertiaInverse),
+_2xSqMxExS(p->_2xSqMxExS), _2xSqIxExSxSxS(p->_2xSqIxExSxSxS) {
+
+}
+
 CUDA_CALLABLE_MEMBER TI_MaterialVoxel::TI_MaterialVoxel(float youngsModulus, float density, double nominalSize) : TI_Material(youngsModulus, density)
 {
 	initialize(nominalSize);

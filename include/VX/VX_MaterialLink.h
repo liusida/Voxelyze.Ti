@@ -50,6 +50,7 @@ protected:
 	
 	friend class CVoxelyze; //give the main simulation class full access
 	friend class CVX_Link; //give links direct access to parameters
+	friend class TI_MaterialLink;
 };
 
 
