@@ -12,6 +12,8 @@ See <http://www.opensource.org/licenses/lgpl-3.0.html> for license details.
 #ifndef VX_MATERIALLINK_H
 #define VX_MATERIALLINK_H
 
+#include "types.h"
+
 #include "VX_MaterialVoxel.h"
 
 //!Defines the homogenous material properties of a link connecting two voxels.

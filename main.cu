@@ -26,7 +26,7 @@ int main(int, char**) {
     //     printf("HOST pVPos pos: %f, %f, %f\n", t->pVPos->pos.x, t->pVPos->pos.y, t->pVPos->pos.z );
     // }
     TI_VoxelyzeKernel VxKernel(&Vx);
-    VxKernel.simpleGPUFunction();
+    //VxKernel.simpleGPUFunction();
 
     VxKernel.doTimeStep(0.001);
     Vx.doTimeStep(0.001);

@@ -12,6 +12,8 @@ See <http://www.opensource.org/licenses/lgpl-3.0.html> for license details.
 #ifndef _QUAT3D_H
 #define _QUAT3D_H
 
+#include "types.h"
+
 #include <math.h>
 #include <float.h>
 #include "Vec3D.h"

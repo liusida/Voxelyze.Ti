@@ -12,6 +12,8 @@ See <http://www.opensource.org/licenses/lgpl-3.0.html> for license details.
 #ifndef VX_LINK_H
 #define VX_LINK_H
 
+#include "types.h"
+
 //#include "VX_Enums.h"
 #include "Vec3D.h"
 #include "Quat3D.h"

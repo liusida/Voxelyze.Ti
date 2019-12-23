@@ -12,6 +12,8 @@ See <http://www.opensource.org/licenses/lgpl-3.0.html> for license details.
 #ifndef CVX_LINEARSOLVER_H
 #define CVX_LINEARSOLVER_H
 
+#include "types.h"
+
 class CVoxelyze;
 #include <string>
 #include <vector>

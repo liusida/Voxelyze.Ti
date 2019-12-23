@@ -13,6 +13,8 @@ See <http://www.opensource.org/licenses/lgpl-3.0.html> for license details.
 #ifndef ARRAY3D_H
 #define ARRAY3D_H
 
+#include "types.h"
+
 //#include "XML_Rip.h"
 //#include <assert.h>
 #include <vector>

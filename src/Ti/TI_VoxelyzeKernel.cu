@@ -68,9 +68,8 @@ void gpu_update_force(TI_Link** links, int num) {
         //TODO: update force for links[gindex];
         TI_Link* t = links[gindex];
         
-        printf("GPU pos2: %f, %f, %f\n", t->pos2.x, t->pos2.y, t->pos2.z);
-        printf("GPU pVPos pos: %f, %f, %f\n", t->pVPos->pos.x, t->pVPos->pos.y, t->pVPos->pos.z );
-        t->test();
+        // printf("GPU pos2: %f, %f, %f\n", t->pos2.x, t->pos2.y, t->pos2.z);
+        // printf("GPU pVPos pos: %f, %f, %f\n", t->pVPos->pos.x, t->pVPos->pos.y, t->pVPos->pos.z );
         t->updateForces();
     }
 }

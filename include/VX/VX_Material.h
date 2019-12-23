@@ -12,6 +12,8 @@ See <http://www.opensource.org/licenses/lgpl-3.0.html> for license details.
 #ifndef VX_MATERIAL_H
 #define VX_MATERIAL_H
 
+#include "types.h"
+
 //#include "VX_Enums.h"
 #include <string>
 #include <vector>

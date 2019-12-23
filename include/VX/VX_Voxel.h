@@ -12,6 +12,8 @@ See <http://www.opensource.org/licenses/lgpl-3.0.html> for license details.
 #ifndef VX_VOXEL_H
 #define VX_VOXEL_H
 
+#include "types.h"
+
 #include "Vec3D.h"
 #include "VX_Link.h"
 #include "VX_External.h"

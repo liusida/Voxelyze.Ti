@@ -12,6 +12,8 @@ See <http://www.opensource.org/licenses/lgpl-3.0.html> for license details.
 #ifndef VX_MATERIALVOXEL_H
 #define VX_MATERIALVOXEL_H
 
+#include "types.h"
+
 #include "VX_Material.h"
 
 //!Defines a voxel type of a specific material.

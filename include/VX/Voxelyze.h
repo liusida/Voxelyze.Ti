@@ -12,6 +12,8 @@ See <http://www.opensource.org/licenses/lgpl-3.0.html> for license details.
 #ifndef VOXELYZE_H
 #define VOXELYZE_H
 
+#include "types.h"
+
 //#include "VX_Enums.h"
 #include "Array3D.h"
 #include "VX_Link.h"

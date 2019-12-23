@@ -12,6 +12,8 @@ See <http://www.opensource.org/licenses/lgpl-3.0.html> for license details.
 #ifndef VX_COLLISION_H
 #define VX_COLLISION_H
 
+#include "types.h"
+
 class CVX_Voxel;
 #include "Vec3D.h"
 

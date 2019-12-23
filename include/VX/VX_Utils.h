@@ -12,6 +12,8 @@ See <http://www.opensource.org/licenses/lgpl-3.0.html> for license details.
 #ifndef VX_UTILS_H
 #define VX_UTILS_H
 
+#include "types.h"
+
 #include "Voxelyze.h"
 
 //static methods and utilites for Voxelyze

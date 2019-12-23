@@ -12,6 +12,8 @@ See <http://www.opensource.org/licenses/lgpl-3.0.html> for license details.
 #ifndef _VEC3D_H
 #define _VEC3D_H
 
+#include "types.h"
+
 //Possible Linux portability issues: min, max
 
 #include <math.h>

@@ -12,6 +12,8 @@ See <http://www.opensource.org/licenses/lgpl-3.0.html> for license details.
 #ifndef VX_MESH_H
 #define VX_MESH_H
 
+#include "types.h"
+
 #include "Voxelyze.h"
 #include <vector>
 

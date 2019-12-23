@@ -1,6 +1,6 @@
 #if !defined(TI_UTILS_H)
 #define TI_UTILS_H
-
+#include <stdexcept>
 #include <cuda_runtime.h>
 #include <cuda.h>
 
@@ -32,5 +32,11 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=f
 #else
 #define CUDA_DEVICE
 #endif
+
+#include "types.h"
+#include "const.h"
+#include "TI_vector.h"
+#include "TI_Vec3D.h"
+#include "TI_Quat3D.h"
 
 #endif // TI_UTILS_H
