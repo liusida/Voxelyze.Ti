@@ -13,8 +13,8 @@ class TI_Collision;
 
 class TI_Voxel {
 public:
-    TI_Voxel(CVX_Voxel* p);
-    TI_Link* getDevPtrFromHostPtr(TI_Link* p);
+    TI_Voxel(CVX_Voxel* p, TI_VoxelyzeKernel* k);
+    TI_Link* getDevPtrFromHostPtr(CVX_Link* p);
 
 	CUDA_DEVICE TI_Link* link(linkDirection direction) const {return links[direction];} //!< Returns a pointer to the link object in the specified direction if it exists. Returns null if a link does not exist in this direction.
 	CUDA_DEVICE int linkCount() const {int retVal =0; for (int i=0; i<6; i++) if (links[i]) retVal++; return retVal;} //!< Returns the number of links present for this voxel out of a total 6 possible.

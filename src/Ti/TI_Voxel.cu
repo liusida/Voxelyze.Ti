@@ -1,4 +1,6 @@
+#include <vector>
 #include "TI_Voxel.h"
+#include "TI_VoxelyzeKernel.h"
 
 TI_Voxel::TI_Voxel(CVX_Voxel *p, TI_VoxelyzeKernel* k): 
 ix(p->ix), iy(p->iy), iz(p->iz),
@@ -43,8 +45,18 @@ previousDt(p->previousDt) {
 	}
 }
 
-TI_Link* TI_Voxel::getDevPtrFromHostPtr(TI_Link* p) {
-	return (TI_Link*) 1;
+TI_Link* TI_Voxel::getDevPtrFromHostPtr(CVX_Link* p) {
+    //search host pointer in _kernel->h_voxels, get the index and get GPU pointer from _kernel->d_voxels.
+	std::vector<CVX_Link *>::iterator it;
+    it = find (_kernel->h_links.begin(), _kernel->h_links.end(), p);
+    if (it != _kernel->h_links.end()) {
+        int index = std::distance(_kernel->h_links.begin(), it);
+        return _kernel->d_links[index];
+    }
+    else {
+        std::cout << "ERROR: link for voxel not found. Maybe the input CVoxelyze* Vx is broken.\n";
+    }
+    return NULL;
 }
 
 CUDA_DEVICE TI_Voxel* TI_Voxel::adjacentVoxel(linkDirection direction) const

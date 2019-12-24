@@ -7,13 +7,13 @@ TI_VoxelyzeKernel::TI_VoxelyzeKernel( CVoxelyze* vx ):
 currentTime(vx->currentTime)
 {
     _vx = vx;
+    
+    //need to allocate memory first, then set the value, because there are links in voxels and voxels in links.
+
     for (auto voxel: vx->voxelsList) {
         //alloc a GPU memory space
         TI_Voxel * d_voxel;
         gpuErrchk(cudaMalloc((void **) &d_voxel, sizeof(TI_Voxel)));
-        //set values for GPU memory space
-        TI_Voxel temp(voxel, this);
-        gpuErrchk(cudaMemcpy(d_voxel, &temp, sizeof(TI_Voxel), cudaMemcpyHostToDevice));
         //save the pointer
         d_voxels.push_back(d_voxel);
         //save host pointer as well
@@ -31,6 +31,13 @@ currentTime(vx->currentTime)
         //save host pointer as well
         h_links.push_back(link);
     }
+    for (unsigned i=0;i<vx->voxelsList.size();i++) {
+        TI_Voxel * d_voxel = d_voxels[i];
+        CVX_Voxel * voxel = vx->voxelsList[i];
+        //set values for GPU memory space
+        TI_Voxel temp(voxel, this);
+        gpuErrchk(cudaMemcpy(d_voxel, &temp, sizeof(TI_Voxel), cudaMemcpyHostToDevice));
+    } 
 }
 
 TI_VoxelyzeKernel::~TI_VoxelyzeKernel()

@@ -1,6 +1,6 @@
 #include <vector>
-#include "TI_VoxelyzeKernel.h"
 #include "TI_Link.h"
+#include "TI_VoxelyzeKernel.h"
 #include "TI_MaterialLink.h"
 
 TI_Link::TI_Link(CVX_Link* p, TI_VoxelyzeKernel* k) :
