@@ -56,12 +56,12 @@ public:
 	//constructors
 	TI_Quat3D(const Quat3D<T> *QuatIn) : w(1), x(0), y(0), z(0) { if (QuatIn) {w = QuatIn->w; x = QuatIn->x; y = QuatIn->y; z = QuatIn->z;} }
 	TI_Quat3D(const Quat3D<T> QuatIn) { w = QuatIn.w; x = QuatIn.x; y = QuatIn.y; z = QuatIn.z; }
-	CUDA_CALLABLE_MEMBER TI_Quat3D(void) : w(1), x(0), y(0), z(0) {} //!< Constructor. Initialzes w, x, y, z to zero.
-	CUDA_CALLABLE_MEMBER TI_Quat3D(const T dw, const T dx, const T dy, const T dz) {w=dw; x=dx; y=dy; z=dz;} //!< Constructor with specified individual values.
-	CUDA_CALLABLE_MEMBER TI_Quat3D(const TI_Quat3D& QuatIn) {w = QuatIn.w; x = QuatIn.x; y = QuatIn.y; z = QuatIn.z;} //!< Copy constructor
-	CUDA_CALLABLE_MEMBER TI_Quat3D(const TI_Vec3D<T>& VecIn) {FromRotationVector(VecIn);} //!< Constructs this quaternion from rotation vector VecIn. See FromRotationVector(). @param[in] VecIn A rotation vector.
-	CUDA_CALLABLE_MEMBER TI_Quat3D(const T angle, const TI_Vec3D<T> &axis){ const T a = angle * (T)0.5; const T s = sin(a); const T c = cos(a); w = c; x = axis.x * s; y = axis.y * s; z = axis.z * s; } //!< Constructs this quaternion from an angle in radians and a unit axis. @param[in] angle An angle in radians @param[in] axis A normalize rotation axis.
-	CUDA_CALLABLE_MEMBER TI_Quat3D(const TI_Vec3D<T> &RotateFrom, const TI_Vec3D<T> &RotateTo){ 
+	CUDA_DEVICE TI_Quat3D(void) : w(1), x(0), y(0), z(0) {} //!< Constructor. Initialzes w, x, y, z to zero.
+	CUDA_DEVICE TI_Quat3D(const T dw, const T dx, const T dy, const T dz) {w=dw; x=dx; y=dy; z=dz;} //!< Constructor with specified individual values.
+	CUDA_DEVICE TI_Quat3D(const TI_Quat3D& QuatIn) {w = QuatIn.w; x = QuatIn.x; y = QuatIn.y; z = QuatIn.z;} //!< Copy constructor
+	CUDA_DEVICE TI_Quat3D(const TI_Vec3D<T>& VecIn) {FromRotationVector(VecIn);} //!< Constructs this quaternion from rotation vector VecIn. See FromRotationVector(). @param[in] VecIn A rotation vector.
+	CUDA_DEVICE TI_Quat3D(const T angle, const TI_Vec3D<T> &axis){ const T a = angle * (T)0.5; const T s = sin(a); const T c = cos(a); w = c; x = axis.x * s; y = axis.y * s; z = axis.z * s; } //!< Constructs this quaternion from an angle in radians and a unit axis. @param[in] angle An angle in radians @param[in] axis A normalize rotation axis.
+	CUDA_DEVICE TI_Quat3D(const TI_Vec3D<T> &RotateFrom, const TI_Vec3D<T> &RotateTo){ 
 		T theta = acos(RotateFrom.Dot(RotateTo)/sqrt(RotateFrom.Length2()*RotateTo.Length2())); //angle between vectors. from A.B=|A||B|cos(theta)
 //		if (theta < DISCARD_ANGLE_RAD) {*this = TI_Quat3D(1,0,0,0); return;} //very small angle, return no rotation
 		if (theta <= 0) {*this = TI_Quat3D(1,0,0,0); return;} //very small angle, return no rotation
@@ -72,62 +72,62 @@ public:
 	} //!< Constructs this quaternion to represent the rotation from two vectors. The vectors need not be normalized and are not modified. @param[in] RotateFrom A vector representing a pre-rotation orientation. @param[in] RotateTo A vector representing a post-rotation orientation.
 
 	//functions to make code with mixed template parameters work...
-	template <typename U> CUDA_CALLABLE_MEMBER TI_Quat3D<T>(const TI_Quat3D<U>& QuatIn) {w = QuatIn.w; x = QuatIn.x; y = QuatIn.y; z = QuatIn.z;} //!< Copy constructor from another template type
-	template <typename U> CUDA_CALLABLE_MEMBER TI_Quat3D<T>(const TI_Vec3D<U>& VecIn) {w = 0; x = VecIn.x; y = VecIn.y; z = VecIn.z;} //!< Copies x, y, z from the specified vector and sets w to zero.
-	template <typename U> CUDA_CALLABLE_MEMBER operator TI_Quat3D<U>() const {return TI_Quat3D<U>(w, x, y, z);} //!< overload conversion operator for different template types
-	template <typename U> CUDA_CALLABLE_MEMBER TI_Quat3D<T> operator=(const TI_Quat3D<U>& s) {w=s.w; x=s.x; y=s.y; z=s.z; return *this; } //!< Equals operator for different template types
-	template <typename U> CUDA_CALLABLE_MEMBER const TI_Quat3D<T> operator+(const TI_Quat3D<U>& s){return TI_Quat3D<T>(w+s.w, x+s.x, y+s.y, z+s.z);} //!< Addition operator for different template types
-	template <typename U> CUDA_CALLABLE_MEMBER const TI_Quat3D<T> operator*(const U& f) const {return TI_Quat3D<T>(f*w, f*x, f*y, f*z);} //!< Scalar multiplication operator for different template types
-	template <typename U> CUDA_CALLABLE_MEMBER const TI_Quat3D<T> operator*(const TI_Quat3D<U>& f) const {return TI_Quat3D(w*f.w - x*f.x - y*f.y - z*f.z, w*f.x + x*f.w + y*f.z - z*f.y, w*f.y - x*f.z + y*f.w + z*f.x, w*f.z + x*f.y - y*f.x + z*f.w);} //!< Quaternion multplication operator for different template types
+	template <typename U> CUDA_DEVICE TI_Quat3D<T>(const TI_Quat3D<U>& QuatIn) {w = QuatIn.w; x = QuatIn.x; y = QuatIn.y; z = QuatIn.z;} //!< Copy constructor from another template type
+	template <typename U> CUDA_DEVICE TI_Quat3D<T>(const TI_Vec3D<U>& VecIn) {w = 0; x = VecIn.x; y = VecIn.y; z = VecIn.z;} //!< Copies x, y, z from the specified vector and sets w to zero.
+	template <typename U> CUDA_DEVICE operator TI_Quat3D<U>() const {return TI_Quat3D<U>(w, x, y, z);} //!< overload conversion operator for different template types
+	template <typename U> CUDA_DEVICE TI_Quat3D<T> operator=(const TI_Quat3D<U>& s) {w=s.w; x=s.x; y=s.y; z=s.z; return *this; } //!< Equals operator for different template types
+	template <typename U> CUDA_DEVICE const TI_Quat3D<T> operator+(const TI_Quat3D<U>& s){return TI_Quat3D<T>(w+s.w, x+s.x, y+s.y, z+s.z);} //!< Addition operator for different template types
+	template <typename U> CUDA_DEVICE const TI_Quat3D<T> operator*(const U& f) const {return TI_Quat3D<T>(f*w, f*x, f*y, f*z);} //!< Scalar multiplication operator for different template types
+	template <typename U> CUDA_DEVICE const TI_Quat3D<T> operator*(const TI_Quat3D<U>& f) const {return TI_Quat3D(w*f.w - x*f.x - y*f.y - z*f.z, w*f.x + x*f.w + y*f.z - z*f.y, w*f.y - x*f.z + y*f.w + z*f.x, w*f.z + x*f.y - y*f.x + z*f.w);} //!< Quaternion multplication operator for different template types
 
 	//overload operators
-	CUDA_CALLABLE_MEMBER TI_Quat3D& operator=(const TI_Quat3D& s) {w = s.w; x = s.x; y = s.y; z = s.z; return *this;} //!< overload equals
-	CUDA_CALLABLE_MEMBER const TI_Quat3D operator+(const TI_Quat3D& s) const {return TI_Quat3D(w+s.w, x+s.x, y+s.y, z+s.z);} //!< overload additoon
-	CUDA_CALLABLE_MEMBER const TI_Quat3D operator-(const TI_Quat3D& s) const {return TI_Quat3D(w-s.w, x-s.x, y-s.y, z-s.z);} //!< overload subtraction
-	CUDA_CALLABLE_MEMBER const TI_Quat3D operator*(const T f) const {return TI_Quat3D(w*f, x*f, y*f, z*f);} //!< overload scalar multiplication
-	CUDA_CALLABLE_MEMBER const TI_Quat3D friend operator*(const T f, const TI_Quat3D v) {return TI_Quat3D(v.w*f, v.x*f, v.y*f, v.z*f);} //!< overload scalar multiplication with number first.
-	CUDA_CALLABLE_MEMBER const TI_Quat3D operator*(const TI_Quat3D& f) const {return TI_Quat3D(w*f.w - x*f.x - y*f.y - z*f.z, w*f.x + x*f.w + y*f.z - z*f.y, w*f.y - x*f.z + y*f.w + z*f.x, w*f.z + x*f.y - y*f.x + z*f.w);} //!< overload quaternion multiplication.
-	CUDA_CALLABLE_MEMBER bool operator==(const TI_Quat3D& s) const {return (w==s.w && x==s.x && y==s.y && z==s.z);} //!< overload is equal.
-	CUDA_CALLABLE_MEMBER bool operator!=(const TI_Quat3D& s) const {return (w!=s.w || x!=s.x || y!=s.y || z!=s.z);} //!< overload is not equal.
-	CUDA_CALLABLE_MEMBER const TI_Quat3D& operator+=(const TI_Quat3D& s) {w += s.w; x += s.x; y += s.y; z += s.z; return *this;} //!< overload add and set
-	CUDA_CALLABLE_MEMBER const TI_Quat3D& operator-=(const TI_Quat3D& s) {w -= s.w; x -= s.x; y -= s.y; z -= s.z; return *this;} //!< overload subtract and set
-	CUDA_CALLABLE_MEMBER const TI_Vec3D<T> ToVec() const {return TI_Vec3D<T>(x, y, z);} //!< Explicit casting to a vector. Throws away w and copies x, y, z directly.
+	CUDA_DEVICE TI_Quat3D& operator=(const TI_Quat3D& s) {w = s.w; x = s.x; y = s.y; z = s.z; return *this;} //!< overload equals
+	CUDA_DEVICE const TI_Quat3D operator+(const TI_Quat3D& s) const {return TI_Quat3D(w+s.w, x+s.x, y+s.y, z+s.z);} //!< overload additoon
+	CUDA_DEVICE const TI_Quat3D operator-(const TI_Quat3D& s) const {return TI_Quat3D(w-s.w, x-s.x, y-s.y, z-s.z);} //!< overload subtraction
+	CUDA_DEVICE const TI_Quat3D operator*(const T f) const {return TI_Quat3D(w*f, x*f, y*f, z*f);} //!< overload scalar multiplication
+	CUDA_DEVICE const TI_Quat3D friend operator*(const T f, const TI_Quat3D v) {return TI_Quat3D(v.w*f, v.x*f, v.y*f, v.z*f);} //!< overload scalar multiplication with number first.
+	CUDA_DEVICE const TI_Quat3D operator*(const TI_Quat3D& f) const {return TI_Quat3D(w*f.w - x*f.x - y*f.y - z*f.z, w*f.x + x*f.w + y*f.z - z*f.y, w*f.y - x*f.z + y*f.w + z*f.x, w*f.z + x*f.y - y*f.x + z*f.w);} //!< overload quaternion multiplication.
+	CUDA_DEVICE bool operator==(const TI_Quat3D& s) const {return (w==s.w && x==s.x && y==s.y && z==s.z);} //!< overload is equal.
+	CUDA_DEVICE bool operator!=(const TI_Quat3D& s) const {return (w!=s.w || x!=s.x || y!=s.y || z!=s.z);} //!< overload is not equal.
+	CUDA_DEVICE const TI_Quat3D& operator+=(const TI_Quat3D& s) {w += s.w; x += s.x; y += s.y; z += s.z; return *this;} //!< overload add and set
+	CUDA_DEVICE const TI_Quat3D& operator-=(const TI_Quat3D& s) {w -= s.w; x -= s.x; y -= s.y; z -= s.z; return *this;} //!< overload subtract and set
+	CUDA_DEVICE const TI_Vec3D<T> ToVec() const {return TI_Vec3D<T>(x, y, z);} //!< Explicit casting to a vector. Throws away w and copies x, y, z directly.
 
 	//utilities
-	CUDA_CALLABLE_MEMBER const T Length() const {return sqrt(Length2());} //!< Returns the length (magnitude) of the quaternion.
-	CUDA_CALLABLE_MEMBER const T Length2() const {return (w*w+x*x+y*y+z*z);} //!< Returns the length (magnitude) squared of the quaternion.
-	CUDA_CALLABLE_MEMBER const T Normalize() {T l = Length(); if (l == 0){w = 1; x = 0; y = 0; z = 0;} else if (l > 0) {T li = 1.0/l; w*=li; x*=li; y*=li; z*=li;} return l;} //!< Normalizes this quaternion. Returns the previous magnitude of this quaternion before normalization. Note: function changes this quaternion.
-	CUDA_CALLABLE_MEMBER void NormalizeFast() {T l = sqrt(x*x+y*y+z*z+w*w); if (l!=0) {T li = 1.0/l;	w*=li; x*=li; y*=li; z*=li;} if (w>=1.0){w=1.0; x=0; y=0; z=0;}}  //!< Normalizes this quaternion slightly faster than Normalize() by not returning a value. Note: function changes this quaternion.
-	CUDA_CALLABLE_MEMBER const TI_Quat3D Inverse() const {T n = w*w + x*x + y*y + z*z; return TI_Quat3D(w/n, -x/n, -y/n, -z/n);} //!< Returns a quaternion that is the inverse of this quaternion. This quaternion is not modified. 
-	CUDA_CALLABLE_MEMBER const TI_Quat3D Conjugate() const {return TI_Quat3D(w, -x, -y, -z);} //!< Returns a quaternion that is the conjugate of this quaternion. This quaternion is not modified.
+	CUDA_DEVICE const T Length() const {return sqrt(Length2());} //!< Returns the length (magnitude) of the quaternion.
+	CUDA_DEVICE const T Length2() const {return (w*w+x*x+y*y+z*z);} //!< Returns the length (magnitude) squared of the quaternion.
+	CUDA_DEVICE const T Normalize() {T l = Length(); if (l == 0){w = 1; x = 0; y = 0; z = 0;} else if (l > 0) {T li = 1.0/l; w*=li; x*=li; y*=li; z*=li;} return l;} //!< Normalizes this quaternion. Returns the previous magnitude of this quaternion before normalization. Note: function changes this quaternion.
+	CUDA_DEVICE void NormalizeFast() {T l = sqrt(x*x+y*y+z*z+w*w); if (l!=0) {T li = 1.0/l;	w*=li; x*=li; y*=li; z*=li;} if (w>=1.0){w=1.0; x=0; y=0; z=0;}}  //!< Normalizes this quaternion slightly faster than Normalize() by not returning a value. Note: function changes this quaternion.
+	CUDA_DEVICE const TI_Quat3D Inverse() const {T n = w*w + x*x + y*y + z*z; return TI_Quat3D(w/n, -x/n, -y/n, -z/n);} //!< Returns a quaternion that is the inverse of this quaternion. This quaternion is not modified. 
+	CUDA_DEVICE const TI_Quat3D Conjugate() const {return TI_Quat3D(w, -x, -y, -z);} //!< Returns a quaternion that is the conjugate of this quaternion. This quaternion is not modified.
 
 	//angle and/or axis calculations
-	CUDA_CALLABLE_MEMBER const T Angle() const {return 2.0*acos(w>1?1:w);} //!< Returns the angular rotation of this quaternion in radians.
-	CUDA_CALLABLE_MEMBER const T AngleDegrees() const {return Angle()*57.29577951308232;} //!< Returns the angular rotation of this quaternion in degrees.
-	CUDA_CALLABLE_MEMBER bool IsNegligibleAngle() const {return 2.0*acos(w) < DISCARD_ANGLE_RAD;} //!< Returns true if the angular rotation of this quaternion is likely to be considered negligible.
-	CUDA_CALLABLE_MEMBER bool IsSmallAngle() const {return w>SMALL_ANGLE_W;} //!< Returns true if the angular rotation of this quaternion is small enough to be a good candidate for small angle approximations.
-	CUDA_CALLABLE_MEMBER TI_Vec3D<T> Axis() const { 
+	CUDA_DEVICE const T Angle() const {return 2.0*acos(w>1?1:w);} //!< Returns the angular rotation of this quaternion in radians.
+	CUDA_DEVICE const T AngleDegrees() const {return Angle()*57.29577951308232;} //!< Returns the angular rotation of this quaternion in degrees.
+	CUDA_DEVICE bool IsNegligibleAngle() const {return 2.0*acos(w) < DISCARD_ANGLE_RAD;} //!< Returns true if the angular rotation of this quaternion is likely to be considered negligible.
+	CUDA_DEVICE bool IsSmallAngle() const {return w>SMALL_ANGLE_W;} //!< Returns true if the angular rotation of this quaternion is small enough to be a good candidate for small angle approximations.
+	CUDA_DEVICE TI_Vec3D<T> Axis() const { 
 		T squareLength = 1.0-w*w; //because x*x + y*y + z*z + w*w = 1.0, but more susceptible to w noise
 		if (squareLength <= 0){return TI_Vec3D<T>(1,0,0);}
 		else {return TI_Vec3D<T>(x, y, z)/sqrt(squareLength);}
 	} //!< Returns the normalized axis of rotation of this quaternion
-	CUDA_CALLABLE_MEMBER TI_Vec3D<T> AxisUnNormalized() const {return TI_Vec3D<T>(x, y, z);} //!< Returns the un0normalized axis of rotation of this quaternion
-	CUDA_CALLABLE_MEMBER void AngleAxis(T &angle, TI_Vec3D<T> &axis) const {AngleAxisUnNormalized(angle, axis); axis.NormalizeFast();} //!< Returns the angle and a normalize axis that represent this quaternion's rotation. @param[out] angle The rotation angle in radians. @param[out] axis The rotation axis in normalized vector form.
-	CUDA_CALLABLE_MEMBER void AngleAxisUnNormalized(T &angle, TI_Vec3D<T> &axis) const 
+	CUDA_DEVICE TI_Vec3D<T> AxisUnNormalized() const {return TI_Vec3D<T>(x, y, z);} //!< Returns the un0normalized axis of rotation of this quaternion
+	CUDA_DEVICE void AngleAxis(T &angle, TI_Vec3D<T> &axis) const {AngleAxisUnNormalized(angle, axis); axis.NormalizeFast();} //!< Returns the angle and a normalize axis that represent this quaternion's rotation. @param[out] angle The rotation angle in radians. @param[out] axis The rotation axis in normalized vector form.
+	CUDA_DEVICE void AngleAxisUnNormalized(T &angle, TI_Vec3D<T> &axis) const 
 	{
 		if (w >= 1.0){angle=0; axis=TI_Vec3D<T>(1,0,0); return;}
 		angle = 2.0*acos(w>1?1:w);
 		axis = TI_Vec3D<T>(x,y,z);
 	} //!< Returns the angle and an un-normalized axis that represent this quaternion's rotation. @param[out] angle The rotation angle in radians. @param[out] axis The rotation axis in un-normalized vector form.
 	
-	CUDA_CALLABLE_MEMBER const TI_Vec3D<T> ToRotationVector() const {
+	CUDA_DEVICE const TI_Vec3D<T> ToRotationVector() const {
 		if (w >= 1.0 || w <= -1.0) return TI_Vec3D<T>(0,0,0);
 		T squareLength = 1.0-w*w; //because x*x + y*y + z*z + w*w = 1.0, but more susceptible to w noise (when 
 		if (squareLength < SLTHRESH_ACOS2SQRT) return TI_Vec3D<T>(x, y, z)*2.0*sqrt((2-2*w)/squareLength); //acos(w) = sqrt(2*(1-x)) for w close to 1. for w=0.001, error is 1.317e-6
 		else return TI_Vec3D<T>(x, y, z)*2.0*acos(w)/sqrt(squareLength);
 	} //!< Returns a rotation vector representing this quaternion rotation. Adapted from http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToAngle/
 	
-	CUDA_CALLABLE_MEMBER void FromRotationVector(const TI_Vec3D<T>& VecIn) { 
+	CUDA_DEVICE void FromRotationVector(const TI_Vec3D<T>& VecIn) { 
 		TI_Vec3D<T> theta = VecIn/2;
 		T s, thetaMag2 = theta.Length2();
 		if (thetaMag2*thetaMag2 < DBL_EPSILONx24 ){ //if the 4th taylor expansion term is negligible
@@ -144,7 +144,7 @@ public:
 		z=theta.z*s;
 	} //!< Overwrites this quaternion with values from the specified rotation vector. Adapted from http://physicsforgames.blogspot.com/2010/02/quaternions.html.  Note: function changes this quaternion. @param[in] VecIn A rotation vector to calculate this quaternion from.
 
-	CUDA_CALLABLE_MEMBER void FromAngleToPosX(const TI_Vec3D<T>& RotateFrom){ //highly optimized at the expense of readability
+	CUDA_DEVICE void FromAngleToPosX(const TI_Vec3D<T>& RotateFrom){ //highly optimized at the expense of readability
 		if (TI_Vec3D<T>(0,0,0) == RotateFrom) return; //leave off if it slows down too much!!
 
 		//Catch and handle small angle:
@@ -173,7 +173,7 @@ public:
 
 
 
-	CUDA_CALLABLE_MEMBER const TI_Vec3D<T> RotateVec3D(const TI_Vec3D<T>& f) const { 
+	CUDA_DEVICE const TI_Vec3D<T> RotateVec3D(const TI_Vec3D<T>& f) const { 
 		T fx=f.x, fy=f.y, fz=f.z;
 		T tw = fx*x + fy*y + fz*z;
 		T tx = fx*w - fy*z + fz*y;
@@ -182,7 +182,7 @@ public:
 		return TI_Vec3D<T>(w*tx + x*tw + y*tz - z*ty, w*ty - x*tz + y*tw + z*tx, w*tz + x*ty - y*tx + z*tw);
 	} //!< Returns a vector representing the specified vector "f" rotated by this quaternion. @param[in] f The vector to transform.
 
-	template <typename U> CUDA_CALLABLE_MEMBER const TI_Vec3D<U> RotateVec3D(const TI_Vec3D<U>& f) const {
+	template <typename U> CUDA_DEVICE const TI_Vec3D<U> RotateVec3D(const TI_Vec3D<U>& f) const {
 		U fx = (U)(f.x), fy=(U)(f.y), fz=(U)(f.z);
 		U tw = (U)(fx*x + fy*y + fz*z);
 		U tx = (U)(fx*w - fy*z + fz*y);
@@ -191,7 +191,7 @@ public:
 		return TI_Vec3D<U>((U)(w*tx + x*tw + y*tz - z*ty), (U)(w*ty - x*tz + y*tw + z*tx), (U)(w*tz + x*ty - y*tx + z*tw));
 	} //!< Returns a vector representing the specified vector "f" rotated by this quaternion. Mixed template parameter version. @param[in] f The vector to transform.
 
-	CUDA_CALLABLE_MEMBER const TI_Vec3D<T> RotateVec3DInv(const TI_Vec3D<T>& f) const { 
+	CUDA_DEVICE const TI_Vec3D<T> RotateVec3DInv(const TI_Vec3D<T>& f) const { 
 		T fx=f.x, fy=f.y, fz=f.z;
 		T tw = x*fx + y*fy + z*fz;
 		T tx = w*fx - y*fz + z*fy;
@@ -200,7 +200,7 @@ public:
 		return TI_Vec3D<T>(tw*x + tx*w + ty*z - tz*y, tw*y - tx*z + ty*w + tz*x, tw*z + tx*y - ty*x + tz*w);	
 	} //!< Returns a vector representing the specified vector "f" rotated by the inverse of this quaternion. This is the opposite of RotateVec3D. @param[in] f The vector to transform.
 	
-	template <typename U> CUDA_CALLABLE_MEMBER const TI_Vec3D<U> RotateVec3DInv(const TI_Vec3D<U>& f) const {
+	template <typename U> CUDA_DEVICE const TI_Vec3D<U> RotateVec3DInv(const TI_Vec3D<U>& f) const {
 		T fx=f.x, fy=f.y, fz=f.z;
 		T tw = x*fx + y*fy + z*fz;
 		T tx = w*fx - y*fz + z*fy;

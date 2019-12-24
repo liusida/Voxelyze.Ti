@@ -11,7 +11,7 @@ _eHat(p->_eHat) {
 	
 }
 
-CUDA_CALLABLE_MEMBER TI_Material::TI_Material(float youngsModulus, float density)
+CUDA_DEVICE TI_Material::TI_Material(float youngsModulus, float density)
 {
 	clear();
 	rho = density;
@@ -20,7 +20,7 @@ CUDA_CALLABLE_MEMBER TI_Material::TI_Material(float youngsModulus, float density
 
 }
 
-CUDA_CALLABLE_MEMBER TI_Material& TI_Material::operator=(const TI_Material& vIn)
+CUDA_DEVICE TI_Material& TI_Material::operator=(const TI_Material& vIn)
 {
 	//error = vIn.error;
 	//myName = vIn.myName;
@@ -50,7 +50,7 @@ CUDA_CALLABLE_MEMBER TI_Material& TI_Material::operator=(const TI_Material& vIn)
 	return *this;
 }
 
-CUDA_CALLABLE_MEMBER void TI_Material::clear()
+CUDA_DEVICE void TI_Material::clear()
 {
 	r = -1;
 	g = -1;
@@ -71,15 +71,14 @@ CUDA_CALLABLE_MEMBER void TI_Material::clear()
 	updateDerived();
 }
 
-CUDA_CALLABLE_MEMBER float TI_Material::stress(float strain, float transverseStrainSum, bool forceLinear)
+CUDA_DEVICE float TI_Material::stress(float strain, float transverseStrainSum, bool forceLinear)
 {
-	printf("~~~>in stress\n");
+	debugDev();
 	//reference: http://www.colorado.edu/engineering/CAS/courses.d/Structures.d/IAST.Lect05.d/IAST.Lect05.pdf page 10
 	if (isFailed(strain)) return 0.0f; //if a failure point is set and exceeded, we've broken!
-	printf("~~~>1\n");
-	printf("%d\n", strainData.size());
+	debugDev(printf("strainData.size()=%d",strainData.size()));
 	if (strain <= strainData[1] || linear || forceLinear){ //for compression/first segment and linear materials (forced or otherwise), simple calculation
-		printf("~~~>2\n");
+		debugDev();
 		if (nu==0.0f) return E*strain;
 		else return _eHat*((1-nu)*strain + nu*transverseStrainSum); 
 //		else return eHat()*((1-nu)*strain + nu*transverseStrainSum); 
@@ -100,12 +99,12 @@ CUDA_CALLABLE_MEMBER float TI_Material::stress(float strain, float transverseStr
 			}
 		}
 	}
-	printf("~~~>3\n");
+	debugDev();
 
 	return 0.0f;
 }
 
-CUDA_CALLABLE_MEMBER float TI_Material::strain(float stress)
+CUDA_DEVICE float TI_Material::strain(float stress)
 {
 	if (stress <= stressData[1] || linear) return stress/E; //for compression/first segment and linear materials (forced or otherwise), simple calculation
 
@@ -120,7 +119,7 @@ CUDA_CALLABLE_MEMBER float TI_Material::strain(float stress)
 }
 
 
-CUDA_CALLABLE_MEMBER float TI_Material::modulus(float strain)
+CUDA_DEVICE float TI_Material::modulus(float strain)
 {
 	if (isFailed(strain)) return 0.0f; //if a failure point is set and exceeded, we've broken!
 	if (strain <= strainData[1] || linear) return E; //for compression/first segment and linear materials, simple calculation
@@ -132,7 +131,7 @@ CUDA_CALLABLE_MEMBER float TI_Material::modulus(float strain)
 	return 0.0f;
 }
 
-CUDA_CALLABLE_MEMBER void TI_Material::setColor(int red, int green, int blue, int alpha)
+CUDA_DEVICE void TI_Material::setColor(int red, int green, int blue, int alpha)
 {
 	setRed(red);
 	setGreen(green);
@@ -140,28 +139,28 @@ CUDA_CALLABLE_MEMBER void TI_Material::setColor(int red, int green, int blue, in
 	setAlpha(alpha);
 }
 
-CUDA_CALLABLE_MEMBER void TI_Material::setRed(int red)
+CUDA_DEVICE void TI_Material::setRed(int red)
 {
 	if (red>255) red=255;
 	if (red<0) red=0;
 	r = red;
 }
 
-CUDA_CALLABLE_MEMBER void TI_Material::setGreen(int green)
+CUDA_DEVICE void TI_Material::setGreen(int green)
 {
 	if (green>255) green=255;
 	if (green<0) green=0;
 	g = green;
 }
 
-CUDA_CALLABLE_MEMBER void TI_Material::setBlue(int blue)
+CUDA_DEVICE void TI_Material::setBlue(int blue)
 {
 	if (blue>255) blue=255;
 	if (blue<0) blue=0;
 	b = blue;
 }
 
-CUDA_CALLABLE_MEMBER void TI_Material::setAlpha(int alpha)
+CUDA_DEVICE void TI_Material::setAlpha(int alpha)
 {
 	if (alpha>255) alpha=255;
 	if (alpha<0) alpha=0;
@@ -187,7 +186,7 @@ Special cases:
 	- 2 data points (bilinear): Yield is taken as the first data point, failure at the second.
 
 */
-CUDA_CALLABLE_MEMBER bool TI_Material::setModel(int dataPointCount, float* pStrainValues, float* pStressValues)
+CUDA_DEVICE bool TI_Material::setModel(int dataPointCount, float* pStrainValues, float* pStressValues)
 {
 	//Pre-checks
 	if (*pStrainValues==0 && *pStressValues==0) { //if first data point is 0,0, ignore it
@@ -257,7 +256,7 @@ CUDA_CALLABLE_MEMBER bool TI_Material::setModel(int dataPointCount, float* pStra
 /*! Specified Young's modulus and failure stress must both be positive.
 Yield stress is interpreted as identical to failure stress. If failure stress is not specified an arbitrary data point consistent with the specified Young's modulus is added to the model.
 */
-CUDA_CALLABLE_MEMBER bool TI_Material::setModelLinear(float youngsModulus, float failureStress)
+CUDA_DEVICE bool TI_Material::setModelLinear(float youngsModulus, float failureStress)
 {
 	if (youngsModulus<=0){
 		//error = "Young's modulus must be positive";
@@ -291,7 +290,7 @@ CUDA_CALLABLE_MEMBER bool TI_Material::setModelLinear(float youngsModulus, float
 /*! Specified Young's modulus, plastic modulus, yield stress, and failure stress must all be positive.
 Plastic modulus must be less than Young's modulus and failure stress must be greater than the yield stress.
 */
-CUDA_CALLABLE_MEMBER bool TI_Material::setModelBilinear(float youngsModulus, float plasticModulus, float yieldStress, float failureStress)
+CUDA_DEVICE bool TI_Material::setModelBilinear(float youngsModulus, float plasticModulus, float yieldStress, float failureStress)
 {
 	if (youngsModulus<=0){
 		//error = "Young's modulus must be positive";
@@ -339,7 +338,7 @@ CUDA_CALLABLE_MEMBER bool TI_Material::setModelBilinear(float youngsModulus, flo
 }
 
 
-CUDA_CALLABLE_MEMBER bool TI_Material::setYieldFromData(float percentStrainOffset)
+CUDA_DEVICE bool TI_Material::setYieldFromData(float percentStrainOffset)
 {
 	sigmaYield = -1.0f; //assume we fail until we succeed.
 	epsilonYield = -1.0f; //assume we fail until we succeed.
@@ -372,7 +371,7 @@ CUDA_CALLABLE_MEMBER bool TI_Material::setYieldFromData(float percentStrainOffse
 	return false;
 }
 
-CUDA_CALLABLE_MEMBER void TI_Material::setPoissonsRatio(float poissonsRatio)
+CUDA_DEVICE void TI_Material::setPoissonsRatio(float poissonsRatio)
 {
 	if (poissonsRatio < 0) poissonsRatio = 0;
 	if (poissonsRatio >= 0.5 ) poissonsRatio = 0.5-FLT_EPSILON*2; //exactly 0.5 will still cause problems, but it can get very close.
@@ -380,44 +379,44 @@ CUDA_CALLABLE_MEMBER void TI_Material::setPoissonsRatio(float poissonsRatio)
 	updateDerived();
 }
 
-CUDA_CALLABLE_MEMBER void TI_Material::setDensity(float density)
+CUDA_DEVICE void TI_Material::setDensity(float density)
 {
 	if (density <= 0) density = FLT_MIN; //density of exactly 0 will cause problems, but can get as close as desired.
 	rho = density;
 	updateDerived();
 }
 
-CUDA_CALLABLE_MEMBER void TI_Material::setStaticFriction(float staticFrictionCoefficient)
+CUDA_DEVICE void TI_Material::setStaticFriction(float staticFrictionCoefficient)
 {
 	if (staticFrictionCoefficient <= 0) staticFrictionCoefficient = 0;
 	muStatic = staticFrictionCoefficient;
 }
 
-CUDA_CALLABLE_MEMBER void TI_Material::setKineticFriction(float kineticFrictionCoefficient)
+CUDA_DEVICE void TI_Material::setKineticFriction(float kineticFrictionCoefficient)
 {
 	if (kineticFrictionCoefficient <= 0) kineticFrictionCoefficient = 0;
 	muKinetic = kineticFrictionCoefficient;
 }
 
-CUDA_CALLABLE_MEMBER void TI_Material::setInternalDamping(float zeta)
+CUDA_DEVICE void TI_Material::setInternalDamping(float zeta)
 {
 	if (zeta <= 0) zeta = 0;
 	zetaInternal = zeta;
 }
 
-CUDA_CALLABLE_MEMBER void TI_Material::setGlobalDamping(float zeta)
+CUDA_DEVICE void TI_Material::setGlobalDamping(float zeta)
 {
 	if (zeta <= 0) zeta = 0;
 	zetaGlobal = zeta;
 }
 
-CUDA_CALLABLE_MEMBER void TI_Material::setCollisionDamping(float zeta)
+CUDA_DEVICE void TI_Material::setCollisionDamping(float zeta)
 {
 	if (zeta <= 0) zeta = 0;
 	zetaCollision = zeta;
 }
 
-CUDA_CALLABLE_MEMBER void TI_Material::setExternalScaleFactor(TI_Vec3D<double> factor)
+CUDA_DEVICE void TI_Material::setExternalScaleFactor(TI_Vec3D<double> factor)
 {
 	if (factor.x <= 0) factor.x = FLT_MIN;
 	if (factor.y <= 0) factor.y = FLT_MIN;
@@ -425,7 +424,7 @@ CUDA_CALLABLE_MEMBER void TI_Material::setExternalScaleFactor(TI_Vec3D<double> f
 	extScale = factor;
 }
 
-CUDA_CALLABLE_MEMBER bool TI_Material::updateDerived() 
+CUDA_DEVICE bool TI_Material::updateDerived() 
 {
 	_eHat = E/((1-2*nu)*(1+nu));
 

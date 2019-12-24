@@ -75,7 +75,7 @@ public:
 	};
 	linkState boolStates;			//single int to store many boolean state values as bit flags according to 
 	
-	bool isLocalVelocityValid() const {printf("Host boolStates %d , LOCAL_VELOCITY_VALID %d\n", boolStates, LOCAL_VELOCITY_VALID); return boolStates & LOCAL_VELOCITY_VALID ? true : false;} //
+	bool isLocalVelocityValid() const {return boolStates & LOCAL_VELOCITY_VALID ? true : false;} //
 	void setBoolState(linkFlags flag, bool set=true) {set ? boolStates |= (int)flag : boolStates &= ~(int)flag;}
 
 	//linkAxis axis() {return ax;}

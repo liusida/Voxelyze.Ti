@@ -6,14 +6,17 @@ project(Voxelyze.Ti VERSION 0.1.0 LANGUAGES CXX CUDA)
 
 set(CMAKE_CXX_STANDARD 14) # set C++ standard to C++14
 
-set(INCLUDE_DIR ${CMAKE_CURRENT_LIST_DIR}/include)
+set(ROOT_DIR ${CMAKE_CURRENT_LIST_DIR})
+#set(ROOT_DIR "/V")
 
-set(VX_INCLUDE_DIR ${CMAKE_CURRENT_LIST_DIR}/include/VX)
-set(VX_SRC_DIR ${CMAKE_CURRENT_LIST_DIR}/src/VX/*.c*)
+set(INCLUDE_DIR ${ROOT_DIR}/include)
+
+set(VX_INCLUDE_DIR ${ROOT_DIR}/include/VX)
+set(VX_SRC_DIR ${ROOT_DIR}/src/VX/*.c*)
 file(GLOB VX_SRC_FILES ${VX_SRC_DIR})
 
-set(TI_INCLUDE_DIR ${CMAKE_CURRENT_LIST_DIR}/include/Ti)
-set(TI_SRC_DIR ${CMAKE_CURRENT_LIST_DIR}/src/Ti/*.c*)
+set(TI_INCLUDE_DIR ${ROOT_DIR}/include/Ti)
+set(TI_SRC_DIR ${ROOT_DIR}/src/Ti/*.c*)
 file(GLOB TI_SRC_FILES ${TI_SRC_DIR})
 # include(CTest)
 # enable_testing()

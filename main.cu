@@ -17,9 +17,9 @@ int main(int, char**) {
     Voxel1->external()->setFixedAll(); //Fixes all 6 degrees of freedom with an external condition on Voxel 1
     Voxel3->external()->setForce(1, 0, 0); //pulls Voxel 3 downward with 1 Newton of force.
 
-    Vx.doTimeStep(0.001);
-    Vx.doTimeStep(0.001);
-    Vx.doTimeStep(0.001);
+    Vx.doTimeStep(0.0001);
+    Vx.doTimeStep(0.0001);
+    Vx.doTimeStep(0.0001);
     // for (int i=0;i<2;i++) {
     //     auto t = Vx.link(i);
     //     printf("Host pos2: %f, %f, %f\n", t->pos2.x, t->pos2.y, t->pos2.z);
@@ -28,8 +28,8 @@ int main(int, char**) {
     TI_VoxelyzeKernel VxKernel(&Vx);
     //VxKernel.simpleGPUFunction();
 
-    VxKernel.doTimeStep(0.001);
-    Vx.doTimeStep(0.001);
+    VxKernel.doTimeStep(0.0001);
+    Vx.doTimeStep(0.0001);
 
     std::cout<<std::endl;
 }

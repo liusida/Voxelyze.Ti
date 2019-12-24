@@ -9,24 +9,24 @@ _2xSqMxExS(p->_2xSqMxExS), _2xSqIxExSxSxS(p->_2xSqIxExSxSxS) {
 
 }
 
-CUDA_CALLABLE_MEMBER TI_MaterialVoxel::TI_MaterialVoxel(float youngsModulus, float density, double nominalSize) : TI_Material(youngsModulus, density)
+CUDA_DEVICE TI_MaterialVoxel::TI_MaterialVoxel(float youngsModulus, float density, double nominalSize) : TI_Material(youngsModulus, density)
 {
 	initialize(nominalSize);
 }
 
-CUDA_CALLABLE_MEMBER TI_MaterialVoxel::TI_MaterialVoxel(const TI_Material& mat, double nominalSize) : TI_Material(mat)
+CUDA_DEVICE TI_MaterialVoxel::TI_MaterialVoxel(const TI_Material& mat, double nominalSize) : TI_Material(mat)
 {
 	initialize(nominalSize);
 }
 
-CUDA_CALLABLE_MEMBER void TI_MaterialVoxel::initialize(double nominalSize)
+CUDA_DEVICE void TI_MaterialVoxel::initialize(double nominalSize)
 {
 	nomSize = nominalSize;
 	gravMult = 0.0f;
 	updateDerived();
 }
 
-CUDA_CALLABLE_MEMBER TI_MaterialVoxel& TI_MaterialVoxel::operator=(const TI_MaterialVoxel& vIn)
+CUDA_DEVICE TI_MaterialVoxel& TI_MaterialVoxel::operator=(const TI_MaterialVoxel& vIn)
 {
 	TI_Material::operator=(vIn); //set base TI_Material class variables equal
 
@@ -45,7 +45,7 @@ CUDA_CALLABLE_MEMBER TI_MaterialVoxel& TI_MaterialVoxel::operator=(const TI_Mate
 	return *this;
 }
 
-CUDA_CALLABLE_MEMBER bool TI_MaterialVoxel::updateDerived() 
+CUDA_DEVICE bool TI_MaterialVoxel::updateDerived() 
 {
 	TI_Material::updateDerived(); //update base TI_Material class derived variables
 
@@ -70,7 +70,7 @@ CUDA_CALLABLE_MEMBER bool TI_MaterialVoxel::updateDerived()
 }
 
 
-CUDA_CALLABLE_MEMBER bool TI_MaterialVoxel::setNominalSize(double size)
+CUDA_DEVICE bool TI_MaterialVoxel::setNominalSize(double size)
 {
 	if (size <= 0) size = FLT_MIN;
 	nomSize=size;

@@ -27,7 +27,8 @@ public:
     std::vector<CVX_Voxel *> h_voxels;
 
     // h_links[i]  -- coresponding to -->  d_links[i]
-    
+	float currentTime; //current time of the simulation in seconds
+
 };
 
 

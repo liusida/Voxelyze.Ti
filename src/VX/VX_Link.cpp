@@ -207,6 +207,8 @@ void CVX_Link::updateForces()
 
 	assert(!(forceNeg.x != forceNeg.x) || !(forceNeg.y != forceNeg.y) || !(forceNeg.z != forceNeg.z)); //assert non QNAN
 	assert(!(forcePos.x != forcePos.x) || !(forcePos.y != forcePos.y) || !(forcePos.z != forcePos.z)); //assert non QNAN
+	debugHost(printf("forceNeg.x---> %f.", forceNeg.x));
+	
 
 
 }

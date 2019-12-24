@@ -1,6 +1,8 @@
 #if !defined(TYPE_H)
 #define TYPE_H
 
+#include "debug_host_dev.h"
+
 enum linkFlags { //default of each should be zero for easy clearing
     LOCAL_VELOCITY_VALID = 1<<0 //has something changes to render local velocity calculations (for damping) invalid? (this happens when small angle or global base size has changed)
 };

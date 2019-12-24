@@ -10,7 +10,7 @@ _sqB2xFMp(p->_sqB2xFMp), _sqB3xIp(p->_sqB3xIp) {
 	//TODO: please remember to free all newly allocated memory after the program works.
 }
 
-CUDA_CALLABLE_MEMBER TI_MaterialLink::TI_MaterialLink(TI_MaterialVoxel* mat1, TI_MaterialVoxel* mat2)
+CUDA_DEVICE TI_MaterialLink::TI_MaterialLink(TI_MaterialVoxel* mat1, TI_MaterialVoxel* mat2)
 {
 	vox1Mat = mat1;
 	vox2Mat = mat2;
@@ -19,7 +19,7 @@ CUDA_CALLABLE_MEMBER TI_MaterialLink::TI_MaterialLink(TI_MaterialVoxel* mat1, TI
 
 }
 
-CUDA_CALLABLE_MEMBER TI_MaterialLink& TI_MaterialLink::operator=(const TI_MaterialLink& vIn)
+CUDA_DEVICE TI_MaterialLink& TI_MaterialLink::operator=(const TI_MaterialLink& vIn)
 {
 	TI_MaterialVoxel::operator=(vIn); //set base TI_MaterialVoxel class variables equal
 
@@ -39,7 +39,7 @@ CUDA_CALLABLE_MEMBER TI_MaterialLink& TI_MaterialLink::operator=(const TI_Materi
 	return *this;
 }
 
-CUDA_CALLABLE_MEMBER bool TI_MaterialLink::updateAll()
+CUDA_DEVICE bool TI_MaterialLink::updateAll()
 {
 	nomSize = 0.5*(vox1Mat->nomSize + vox2Mat->nomSize); //these should be the same...
 
@@ -115,7 +115,7 @@ CUDA_CALLABLE_MEMBER bool TI_MaterialLink::updateAll()
 	return updateDerived();
 }
 
-CUDA_CALLABLE_MEMBER bool TI_MaterialLink::updateDerived() 
+CUDA_DEVICE bool TI_MaterialLink::updateDerived() 
 {
 	TI_MaterialVoxel::updateDerived(); //update base TI_Material class derived variables
 

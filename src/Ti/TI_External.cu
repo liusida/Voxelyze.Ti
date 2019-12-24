@@ -7,17 +7,12 @@ _extRotationQ(p->_extRotationQ) {
 
 }
 
-CUDA_CALLABLE_MEMBER TI_External::TI_External() 
+CUDA_DEVICE TI_External::TI_External() 
 {
 	reset();
 }
 
-CUDA_CALLABLE_MEMBER TI_External::~TI_External()
-{
-}
-
-
-CUDA_CALLABLE_MEMBER TI_External& TI_External::operator=(const TI_External& eIn)
+CUDA_DEVICE TI_External& TI_External::operator=(const TI_External& eIn)
 {
 	dofFixed = eIn.dofFixed;
 	extForce = eIn.extForce;
@@ -28,7 +23,7 @@ CUDA_CALLABLE_MEMBER TI_External& TI_External::operator=(const TI_External& eIn)
 	return *this;
 }
 
-CUDA_CALLABLE_MEMBER void TI_External::reset()
+CUDA_DEVICE void TI_External::reset()
 {
 	dofFixed=0;
 	extForce = extMoment = TI_Vec3D<float>();
@@ -38,13 +33,13 @@ CUDA_CALLABLE_MEMBER void TI_External::reset()
 }
 
 
-CUDA_CALLABLE_MEMBER void TI_External::setFixed(bool xTranslate, bool yTranslate, bool zTranslate, bool xRotate, bool yRotate, bool zRotate)
+CUDA_DEVICE void TI_External::setFixed(bool xTranslate, bool yTranslate, bool zTranslate, bool xRotate, bool yRotate, bool zRotate)
 {
 	dofFixed = dof(xTranslate, yTranslate, zTranslate, xRotate, yRotate, zRotate);
 	extTranslation = extRotation = TI_Vec3D<double>(); //clear displacements
 }
 
-CUDA_CALLABLE_MEMBER void TI_External::setDisplacement(dofComponent dof, double displacement)
+CUDA_DEVICE void TI_External::setDisplacement(dofComponent dof, double displacement)
 {
 	dofSet(dofFixed, dof, true);
 	if (displacement != 0.0f){
@@ -59,7 +54,7 @@ CUDA_CALLABLE_MEMBER void TI_External::setDisplacement(dofComponent dof, double 
 	rotationChanged();
 }
 
-CUDA_CALLABLE_MEMBER void TI_External::setDisplacementAll(const TI_Vec3D<double>& translation, const TI_Vec3D<double>& rotation)
+CUDA_DEVICE void TI_External::setDisplacementAll(const TI_Vec3D<double>& translation, const TI_Vec3D<double>& rotation)
 {
 	dofSetAll(dofFixed, true);
 	extTranslation = translation;
@@ -68,7 +63,7 @@ CUDA_CALLABLE_MEMBER void TI_External::setDisplacementAll(const TI_Vec3D<double>
 	rotationChanged();
 }
 
-CUDA_CALLABLE_MEMBER void TI_External::clearDisplacement(dofComponent dof)
+CUDA_DEVICE void TI_External::clearDisplacement(dofComponent dof)
 {
 	dofSet(dofFixed, dof, false);
 
@@ -82,7 +77,7 @@ CUDA_CALLABLE_MEMBER void TI_External::clearDisplacement(dofComponent dof)
 	rotationChanged();
 }
 
-CUDA_CALLABLE_MEMBER void TI_External::clearDisplacementAll()
+CUDA_DEVICE void TI_External::clearDisplacementAll()
 {
 	dofSetAll(dofFixed, false);
 	extTranslation = TI_Vec3D<double>();
@@ -91,7 +86,7 @@ CUDA_CALLABLE_MEMBER void TI_External::clearDisplacementAll()
 	rotationChanged();
 }
 
-CUDA_CALLABLE_MEMBER void TI_External::rotationChanged()
+CUDA_DEVICE void TI_External::rotationChanged()
 {
 	if (extRotation != TI_Vec3D<double>()){
 		_extRotationQ = TI_Quat3D<double>(extRotation);

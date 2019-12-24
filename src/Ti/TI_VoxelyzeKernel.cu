@@ -3,7 +3,8 @@
 #include "TI_VoxelyzeKernel.h"
 #include "TI_Utils.h"
 
-TI_VoxelyzeKernel::TI_VoxelyzeKernel( CVoxelyze* vx )
+TI_VoxelyzeKernel::TI_VoxelyzeKernel( CVoxelyze* vx ):
+currentTime(vx->currentTime)
 {
     _vx = vx;
     for (auto voxel: vx->voxelsList) {
@@ -11,7 +12,7 @@ TI_VoxelyzeKernel::TI_VoxelyzeKernel( CVoxelyze* vx )
         TI_Voxel * d_voxel;
         gpuErrchk(cudaMalloc((void **) &d_voxel, sizeof(TI_Voxel)));
         //set values for GPU memory space
-        TI_Voxel temp(voxel);
+        TI_Voxel temp(voxel, this);
         gpuErrchk(cudaMemcpy(d_voxel, &temp, sizeof(TI_Voxel), cudaMemcpyHostToDevice));
         //save the pointer
         d_voxels.push_back(d_voxel);
@@ -65,12 +66,20 @@ __global__
 void gpu_update_force(TI_Link** links, int num) {
     int gindex = threadIdx.x + blockIdx.x * blockDim.x; 
     if (gindex < num) {
-        //TODO: update force for links[gindex];
         TI_Link* t = links[gindex];
-        
-        // printf("GPU pos2: %f, %f, %f\n", t->pos2.x, t->pos2.y, t->pos2.z);
-        // printf("GPU pVPos pos: %f, %f, %f\n", t->pVPos->pos.x, t->pVPos->pos.y, t->pVPos->pos.z );
         t->updateForces();
+        debugDev();
+        if (t->axialStrain() > 100) { printf("ERROR: Diverged."); }
+        debugDev();
+    }
+}
+__global__
+void gpu_update_voxel(TI_Voxel** voxels, int num, double dt) {
+    int gindex = threadIdx.x + blockIdx.x * blockDim.x; 
+    if (gindex < num) {
+        debugDev();
+        TI_Voxel* t = voxels[gindex];
+        t->timeStep(dt);
     }
 }
 void TI_VoxelyzeKernel::doTimeStep(double dt) {
@@ -78,4 +87,16 @@ void TI_VoxelyzeKernel::doTimeStep(double dt) {
     int N = d_links.size();
     int gridSize = (N + blockSize - 1) / blockSize;
     gpu_update_force<<<gridSize, blockSize>>>(thrust::raw_pointer_cast(d_links.data()), N);
+    cudaDeviceSynchronize();
+    
+    //TODO:updateCollision
+    debugHost( printf("TODO:updateCollision") );
+    //gpu_update_voxel
+    blockSize = 256;
+    N = d_voxels.size();
+    gridSize = (N + blockSize - 1) / blockSize;
+    gpu_update_voxel<<<gridSize, blockSize>>>(thrust::raw_pointer_cast(d_voxels.data()), N, dt);
+    cudaDeviceSynchronize();
+
+    currentTime += dt;
 }

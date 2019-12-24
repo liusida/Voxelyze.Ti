@@ -1,17 +1,24 @@
 #include "TI_Voxel.h"
 
-TI_Voxel::TI_Voxel(CVX_Voxel *p): 
+TI_Voxel::TI_Voxel(CVX_Voxel *p, TI_VoxelyzeKernel* k): 
 ix(p->ix), iy(p->iy), iz(p->iz),
 pos(p->pos), linMom(p->linMom), orient(p->orient), angMom(p->angMom),
 boolStates(p->boolStates), temp(p->temp), pStrain(p->pStrain), poissonsStrainInvalid(p->poissonsStrainInvalid),
-previousDt(p->previousDt),
-lastColWatchPosition(*p->lastColWatchPosition),
-colWatch(*p->colWatch), nearby(*p->nearby) {
+previousDt(p->previousDt) {
 	_voxel = p;
+    _kernel = k;
 
 	gpuErrchk(cudaMalloc((void **) &mat, sizeof(TI_MaterialVoxel)));
 	TI_MaterialVoxel temp(p->mat);
 	gpuErrchk(cudaMemcpy(mat, &temp, sizeof(TI_MaterialVoxel), cudaMemcpyHostToDevice));
+
+	for (unsigned i=0;i<6;i++) {
+		if (p->links[i]) {
+			links[i] = getDevPtrFromHostPtr(p->links[i]);
+		} else {
+			links[i] = NULL;
+		}
+	}
 
 	// mat = new TI_MaterialVoxel(p->mat);
 	if (p->ext) {
@@ -21,29 +28,46 @@ colWatch(*p->colWatch), nearby(*p->nearby) {
 	} else {
 		ext = NULL;
 	}
+
+	//lastColWatchPosition(*p->lastColWatchPosition),colWatch(p->colWatch), nearby(p->nearby)
+	if (p->lastColWatchPosition) {
+		lastColWatchPosition = (*p->lastColWatchPosition);
+	}
+	if (p->colWatch) {
+		//colWatch = (*p->colWatch);
+		debugDev();
+	}
+	if (p->nearby) {
+		//nearby = (*p->nearby);
+		debugDev();
+	}
 }
 
-CUDA_CALLABLE_MEMBER TI_Voxel* TI_Voxel::adjacentVoxel(linkDirection direction) const
+TI_Link* TI_Voxel::getDevPtrFromHostPtr(TI_Link* p) {
+	return (TI_Link*) 1;
+}
+
+CUDA_DEVICE TI_Voxel* TI_Voxel::adjacentVoxel(linkDirection direction) const
 {
 	TI_Link* pL = links[(int)direction];
 	if (pL) return pL->voxel(true)==this ? pL->voxel(false) : pL->voxel(true);
 	else return NULL;
 }
 
-CUDA_CALLABLE_MEMBER void TI_Voxel::addLinkInfo(linkDirection direction, TI_Link* link)
+CUDA_DEVICE void TI_Voxel::addLinkInfo(linkDirection direction, TI_Link* link)
 {
 	links[direction] = link;
 	updateSurface();
 }
 
-CUDA_CALLABLE_MEMBER void TI_Voxel::removeLinkInfo(linkDirection direction)
+CUDA_DEVICE void TI_Voxel::removeLinkInfo(linkDirection direction)
 {
 	links[direction]=NULL;
 	updateSurface();
 }
 
 
-CUDA_CALLABLE_MEMBER void TI_Voxel::replaceMaterial(TI_MaterialVoxel* newMaterial)
+CUDA_DEVICE void TI_Voxel::replaceMaterial(TI_MaterialVoxel* newMaterial)
 {
 	if (newMaterial != NULL){
 
@@ -57,7 +81,7 @@ CUDA_CALLABLE_MEMBER void TI_Voxel::replaceMaterial(TI_MaterialVoxel* newMateria
 	}
 }
 
-CUDA_CALLABLE_MEMBER bool TI_Voxel::isYielded() const
+CUDA_DEVICE bool TI_Voxel::isYielded() const
 {
 	for (int i=0; i<6; i++){
 		if (links[i] && links[i]->isYielded()) return true;
@@ -65,7 +89,7 @@ CUDA_CALLABLE_MEMBER bool TI_Voxel::isYielded() const
 	return false;
 }
 
-CUDA_CALLABLE_MEMBER bool TI_Voxel::isFailed() const
+CUDA_DEVICE bool TI_Voxel::isFailed() const
 {
 	for (int i=0; i<6; i++){
 		if (links[i] && links[i]->isFailed()) return true;
@@ -73,7 +97,7 @@ CUDA_CALLABLE_MEMBER bool TI_Voxel::isFailed() const
 	return false;
 }
 
-CUDA_CALLABLE_MEMBER void TI_Voxel::setTemperature(float temperature)
+CUDA_DEVICE void TI_Voxel::setTemperature(float temperature)
 {
 	temp = temperature;
 	for (int i=0; i<6; i++){
@@ -82,7 +106,7 @@ CUDA_CALLABLE_MEMBER void TI_Voxel::setTemperature(float temperature)
 } 
 
 
-CUDA_CALLABLE_MEMBER TI_Vec3D<float> TI_Voxel::externalForce()
+CUDA_DEVICE TI_Vec3D<float> TI_Voxel::externalForce()
 {
 	TI_Vec3D<float> returnForce(ext->force());
 	if (ext->isFixed(X_TRANSLATE) || ext->isFixed(Y_TRANSLATE) || ext->isFixed(Z_TRANSLATE)){
@@ -94,7 +118,7 @@ CUDA_CALLABLE_MEMBER TI_Vec3D<float> TI_Voxel::externalForce()
 	return returnForce;
 }
 
-CUDA_CALLABLE_MEMBER TI_Vec3D<float> TI_Voxel::externalMoment()
+CUDA_DEVICE TI_Vec3D<float> TI_Voxel::externalMoment()
 {
 	TI_Vec3D<float> returnMoment(ext->moment());
 	if (ext->isFixed(X_ROTATE) || ext->isFixed(Y_ROTATE) || ext->isFixed(Z_ROTATE)){
@@ -106,12 +130,12 @@ CUDA_CALLABLE_MEMBER TI_Vec3D<float> TI_Voxel::externalMoment()
 	return returnMoment;
 }
 
-CUDA_CALLABLE_MEMBER TI_Vec3D<float> TI_Voxel::cornerPosition(voxelCorner corner) const
+CUDA_DEVICE TI_Vec3D<float> TI_Voxel::cornerPosition(voxelCorner corner) const
 {
 	return (TI_Vec3D<float>)pos + orient.RotateVec3D(cornerOffset(corner));
 }
 
-CUDA_CALLABLE_MEMBER TI_Vec3D<float> TI_Voxel::cornerOffset(voxelCorner corner) const
+CUDA_DEVICE TI_Vec3D<float> TI_Voxel::cornerOffset(voxelCorner corner) const
 {
 	TI_Vec3D<> strains;
 	for (int i=0; i<3; i++){
@@ -127,33 +151,37 @@ CUDA_CALLABLE_MEMBER TI_Vec3D<float> TI_Voxel::cornerOffset(voxelCorner corner) 
 }
 
 //http://klas-physics.googlecode.com/svn/trunk/src/general/Integrator.cpp (reference)
-CUDA_CALLABLE_MEMBER void TI_Voxel::timeStep(float dt)
+CUDA_DEVICE void TI_Voxel::timeStep(float dt)
 {
+	debugDev(printf("previousDt=%f",previousDt));
 	previousDt = dt;
 	if (dt == 0.0f) return;
 
 	if (ext && ext->isFixedAll()){
+		debugDev();
 		pos = originalPosition() + ext->translation();
 		orient = ext->rotationQuat();
 		haltMotion();
 		return;
 	}
-
+	debugDev();
 	//Translation
 	TI_Vec3D<double> curForce = force();
+	debugDev();
 	TI_Vec3D<double> fricForce = curForce;
-
+	debugDev();
 	if (isFloorEnabled()) floorForce(dt, &curForce); //floor force needs dt to calculate threshold to "stop" a slow voxel into static friction.
-
+	debugDev();
 	fricForce = curForce - fricForce;
-
+	debugDev();
 	assert(!(curForce.x != curForce.x) || !(curForce.y != curForce.y) || !(curForce.z != curForce.z)); //assert non QNAN
 	linMom += curForce*dt;
-
+	debugDev();
 	TI_Vec3D<double> translate(linMom*(dt*mat->_massInverse)); //movement of the voxel this timestep
-
+	debugDev();
 //	we need to check for friction conditions here (after calculating the translation) and stop things accordingly
 	if (isFloorEnabled() && floorPenetration() >= 0){ //we must catch a slowing voxel here since it all boils down to needing access to the dt of this timestep.
+		debugDev();
 		double work = fricForce.x*translate.x + fricForce.y*translate.y; //F dot disp
 		double hKe = 0.5*mat->_massInverse*(linMom.x*linMom.x + linMom.y*linMom.y); //horizontal kinetic energy
 
@@ -165,16 +193,16 @@ CUDA_CALLABLE_MEMBER void TI_Voxel::timeStep(float dt)
 		}
 	}
 	else setFloorStaticFriction(false);
-
+	debugDev();
 
 	pos += translate;
 
 	//Rotation
 	TI_Vec3D<> curMoment = moment();
 	angMom += curMoment*dt;
-
+	debugDev();
 	orient = TI_Quat3D<>(angMom*(dt*mat->_momentInertiaInverse))*orient; //update the orientation
-
+	debugDev();
 	if (ext){
 		double size = mat->nominalSize();
 		if (ext->isFixed(X_TRANSLATE)) {pos.x = ix*size + ext->translation().x; linMom.x=0;}
@@ -195,35 +223,41 @@ CUDA_CALLABLE_MEMBER void TI_Voxel::timeStep(float dt)
 		}
 	}
 
-
+	debugDev();
 	poissonsStrainInvalid = true;
 }
 
-CUDA_CALLABLE_MEMBER TI_Vec3D<double> TI_Voxel::force()
+CUDA_DEVICE TI_Vec3D<double> TI_Voxel::force()
 {
+	debugDev();
 	//forces from internal bonds
 	TI_Vec3D<double> totalForce(0,0,0);
 	for (int i=0; i<6; i++){ 
+		debugDev(printf("\tlinks[%d]: %p\t", i, links[i]));
 		if (links[i]) totalForce += links[i]->force(isNegative((linkDirection)i)); //total force in LCS
 	}
+	debugDev();
 	totalForce = orient.RotateVec3D(totalForce); //from local to global coordinates
 	assert(!(totalForce.x != totalForce.x) || !(totalForce.y != totalForce.y) || !(totalForce.z != totalForce.z)); //assert non QNAN
+	debugDev();
 
 	//other forces
 	if (externalExists()) totalForce += external()->force(); //external forces
 	totalForce -= velocity()*mat->globalDampingTranslateC(); //global damping f-cv
 	totalForce.z += mat->gravityForce(); //gravity, according to f=mg
+	debugDev();
 
 	if (isCollisionsEnabled()){
 		for (int i=0;i<colWatch.size();i++){
 			totalForce -= colWatch[i]->contactForce(this);
 		}
 	}
+	debugDev();
 
 	return totalForce;
 }
 
-CUDA_CALLABLE_MEMBER TI_Vec3D<double> TI_Voxel::moment()
+CUDA_DEVICE TI_Vec3D<double> TI_Voxel::moment()
 {
 	//moments from internal bonds
 	TI_Vec3D<double> totalMoment(0,0,0);
@@ -239,7 +273,7 @@ CUDA_CALLABLE_MEMBER TI_Vec3D<double> TI_Voxel::moment()
 }
 
 
-CUDA_CALLABLE_MEMBER void TI_Voxel::floorForce(float dt, TI_Vec3D<double>* pTotalForce)
+CUDA_DEVICE void TI_Voxel::floorForce(float dt, TI_Vec3D<double>* pTotalForce)
 {
 	float CurPenetration = floorPenetration(); //for now use the average.
 
@@ -265,7 +299,7 @@ CUDA_CALLABLE_MEMBER void TI_Voxel::floorForce(float dt, TI_Vec3D<double>* pTota
 
 }
 
-CUDA_CALLABLE_MEMBER TI_Vec3D<float> TI_Voxel::strain(bool poissonsStrain) const
+CUDA_DEVICE TI_Vec3D<float> TI_Voxel::strain(bool poissonsStrain) const
 {
 	//if no connections in the positive and negative directions of a particular axis, strain is zero
 	//if one connection in positive or negative direction of a particular axis, strain is that strain - ?? and force or constraint?
@@ -301,7 +335,7 @@ CUDA_CALLABLE_MEMBER TI_Vec3D<float> TI_Voxel::strain(bool poissonsStrain) const
 	return intStrRet;
 }
 
-CUDA_CALLABLE_MEMBER TI_Vec3D<float> TI_Voxel::poissonsStrain()
+CUDA_DEVICE TI_Vec3D<float> TI_Voxel::poissonsStrain()
 {
 	if (poissonsStrainInvalid){
 		pStrain = strain(true);
@@ -311,7 +345,7 @@ CUDA_CALLABLE_MEMBER TI_Vec3D<float> TI_Voxel::poissonsStrain()
 }
 
 
-CUDA_CALLABLE_MEMBER float TI_Voxel::transverseStrainSum(linkAxis axis)
+CUDA_DEVICE float TI_Voxel::transverseStrainSum(linkAxis axis)
 {
 	if (mat->poissonsRatio() == 0) return 0;
 	
@@ -326,7 +360,7 @@ CUDA_CALLABLE_MEMBER float TI_Voxel::transverseStrainSum(linkAxis axis)
 
 }
 
-CUDA_CALLABLE_MEMBER float TI_Voxel::transverseArea(linkAxis axis)
+CUDA_DEVICE float TI_Voxel::transverseArea(linkAxis axis)
 {
 	float size = (float)mat->nominalSize();
 	if (mat->poissonsRatio() == 0) return size*size;
@@ -341,7 +375,7 @@ CUDA_CALLABLE_MEMBER float TI_Voxel::transverseArea(linkAxis axis)
 	}
 }
 
-CUDA_CALLABLE_MEMBER void TI_Voxel::updateSurface()
+CUDA_DEVICE void TI_Voxel::updateSurface()
 {
 	bool interior = true;
 	for (int i=0; i<6; i++) if (!links[i]) interior = false;
@@ -349,7 +383,7 @@ CUDA_CALLABLE_MEMBER void TI_Voxel::updateSurface()
 }
 
 
-CUDA_CALLABLE_MEMBER void TI_Voxel::enableCollisions(bool enabled, float watchRadius) {
+CUDA_DEVICE void TI_Voxel::enableCollisions(bool enabled, float watchRadius) {
 	if (enabled){
 		//if (!lastColWatchPosition) lastColWatchPosition = new TI_Vec3D<float>;
 		//if (!colWatch) colWatch = new TI_vector<TI_Collision*>;
@@ -360,7 +394,7 @@ CUDA_CALLABLE_MEMBER void TI_Voxel::enableCollisions(bool enabled, float watchRa
 }
 
 
-CUDA_CALLABLE_MEMBER void TI_Voxel::generateNearby(int linkDepth, bool surfaceOnly){
+CUDA_DEVICE void TI_Voxel::generateNearby(int linkDepth, bool surfaceOnly){
 	TI_vector<TI_Voxel*> allNearby;
 	allNearby.push_back(this);
 	
