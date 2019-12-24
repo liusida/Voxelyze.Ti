@@ -2,16 +2,18 @@
 #define TI_EXTERNAL_H
 
 #include "TI_Utils.h"
-
+#include "VX_External.h"
 
 class TI_External {
 public:
-CUDA_CALLABLE_MEMBER inline void dofSet(dofObject& obj, dofComponent dof, bool set) {set ? obj|=dof : obj&=~dof;}
-CUDA_CALLABLE_MEMBER inline void dofSetAll(dofObject& obj, bool set) {set ? obj|=0x3F : obj&=~0x3F;}
-CUDA_CALLABLE_MEMBER inline bool dofIsSet(dofObject obj, dofComponent dof){return (dof&obj)?true:false;}
-CUDA_CALLABLE_MEMBER inline bool dofIsAllSet(dofObject obj){return (obj&0x3F)==0x3F;}
-CUDA_CALLABLE_MEMBER inline bool dofIsNoneSet(dofObject obj){return !(obj&0x3F);}
-CUDA_CALLABLE_MEMBER inline dofObject dof(bool tx, bool ty, bool tz, bool rx, bool ry, bool rz) {dofObject ret=0; dofSet(ret, X_TRANSLATE, tx); dofSet(ret, Y_TRANSLATE, ty); dofSet(ret, Z_TRANSLATE, tz); dofSet(ret, X_ROTATE, rx); dofSet(ret, Y_ROTATE, ry); dofSet(ret, Z_ROTATE, rz); return ret;}
+	TI_External( CVX_External* p );
+
+	CUDA_CALLABLE_MEMBER inline void dofSet(dofObject& obj, dofComponent dof, bool set) {set ? obj|=dof : obj&=~dof;}
+	CUDA_CALLABLE_MEMBER inline void dofSetAll(dofObject& obj, bool set) {set ? obj|=0x3F : obj&=~0x3F;}
+	CUDA_CALLABLE_MEMBER inline bool dofIsSet(dofObject obj, dofComponent dof){return (dof&obj)?true:false;}
+	CUDA_CALLABLE_MEMBER inline bool dofIsAllSet(dofObject obj){return (obj&0x3F)==0x3F;}
+	CUDA_CALLABLE_MEMBER inline bool dofIsNoneSet(dofObject obj){return !(obj&0x3F);}
+	CUDA_CALLABLE_MEMBER inline dofObject dof(bool tx, bool ty, bool tz, bool rx, bool ry, bool rz) {dofObject ret=0; dofSet(ret, X_TRANSLATE, tx); dofSet(ret, Y_TRANSLATE, ty); dofSet(ret, Z_TRANSLATE, tz); dofSet(ret, X_ROTATE, rx); dofSet(ret, Y_ROTATE, ry); dofSet(ret, Z_ROTATE, rz); return ret;}
 
 	CUDA_CALLABLE_MEMBER TI_External();
 	CUDA_CALLABLE_MEMBER ~TI_External(); //!<destructor
@@ -33,7 +35,7 @@ CUDA_CALLABLE_MEMBER inline dofObject dof(bool tx, bool ty, bool tz, bool rx, bo
 
 	CUDA_CALLABLE_MEMBER TI_Vec3D<double> translation() {return extTranslation;} //!< Returns any external translation that has been applied to this external.
 	CUDA_CALLABLE_MEMBER TI_Vec3D<double> rotation() {return extRotation;} //!< Returns any external rotation that has been applied to this external as a rotation vector.
-	CUDA_CALLABLE_MEMBER TI_Quat3D<double> rotationQuat() {return _extRotationQ ? *_extRotationQ : TI_Quat3D<double>();} //!< Returns any external rotation that has been applied to this external as a quaternion.
+	CUDA_CALLABLE_MEMBER TI_Quat3D<double> rotationQuat() {return _extRotationQ;} //!< Returns any external rotation that has been applied to this external as a quaternion.
 
 
 	CUDA_CALLABLE_MEMBER void setFixed(bool xTranslate, bool yTranslate, bool zTranslate, bool xRotate, bool yRotate, bool zRotate); //!< Sets any of the degrees of freedom specified as "true" to fixed for this voxel. (GCS) @param[in] xTranslate Translation in the X direction  @param[in] yTranslate Translation in the Y direction @param[in] zTranslate Translation in the Z direction @param[in] xRotate Rotation about the X axis @param[in] yRotate Rotation about the Y axis @param[in] zRotate Rotation about the Z axis
@@ -69,7 +71,7 @@ CUDA_CALLABLE_MEMBER inline dofObject dof(bool tx, bool ty, bool tz, bool rx, bo
 	
 	TI_Vec3D<float> extForce, extMoment; //External force, moment applied to these voxels (N, N-m) if relevant DOF are unfixed
 	TI_Vec3D<double> extTranslation, extRotation;
-	TI_Quat3D<double>* _extRotationQ; //cached quaternion rotation (pointer to only create if needed)
+	TI_Quat3D<double> _extRotationQ; //cached quaternion rotation (pointer to only create if needed)
 
 };
 

@@ -90,6 +90,8 @@ private:
 	Quat3D<double>* _extRotationQ; //cached quaternion rotation (pointer to only create if needed)
 
 	void rotationChanged(); //called to keep cached quaternion rotation in sync
+
+	friend class TI_External;
 };
 
 

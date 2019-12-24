@@ -1,9 +1,26 @@
 #include "TI_Voxel.h"
-#include "TI_Link.h"
-#include "TI_Collision.h"
 
-TI_Voxel::TI_Voxel(CVX_Voxel *p) {
-    _voxel = p;
+TI_Voxel::TI_Voxel(CVX_Voxel *p): 
+ix(p->ix), iy(p->iy), iz(p->iz),
+pos(p->pos), linMom(p->linMom), orient(p->orient), angMom(p->angMom),
+boolStates(p->boolStates), temp(p->temp), pStrain(p->pStrain), poissonsStrainInvalid(p->poissonsStrainInvalid),
+previousDt(p->previousDt),
+lastColWatchPosition(*p->lastColWatchPosition),
+colWatch(*p->colWatch), nearby(*p->nearby) {
+	_voxel = p;
+
+	gpuErrchk(cudaMalloc((void **) &mat, sizeof(TI_MaterialVoxel)));
+	TI_MaterialVoxel temp(p->mat);
+	gpuErrchk(cudaMemcpy(mat, &temp, sizeof(TI_MaterialVoxel), cudaMemcpyHostToDevice));
+
+	// mat = new TI_MaterialVoxel(p->mat);
+	if (p->ext) {
+		gpuErrchk(cudaMalloc((void **) &ext, sizeof(TI_External)));
+		TI_External temp2(p->ext);
+		gpuErrchk(cudaMemcpy(ext, &temp2, sizeof(TI_External), cudaMemcpyHostToDevice));
+	} else {
+		ext = NULL;
+	}
 }
 
 CUDA_CALLABLE_MEMBER TI_Voxel* TI_Voxel::adjacentVoxel(linkDirection direction) const
@@ -334,7 +351,7 @@ CUDA_CALLABLE_MEMBER void TI_Voxel::updateSurface()
 
 CUDA_CALLABLE_MEMBER void TI_Voxel::enableCollisions(bool enabled, float watchRadius) {
 	if (enabled){
-		if (!lastColWatchPosition) lastColWatchPosition = new TI_Vec3D<float>;
+		//if (!lastColWatchPosition) lastColWatchPosition = new TI_Vec3D<float>;
 		//if (!colWatch) colWatch = new TI_vector<TI_Collision*>;
 		//if (!nearby) nearby = new TI_vector<TI_Voxel*>;
 	}

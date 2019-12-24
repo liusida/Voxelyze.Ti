@@ -3,11 +3,6 @@
 #include "TI_Utils.h"
 
 #include "VX_Link.h"
-#include "TI_Vec3D.h"
-#include "TI_Quat3D.h"
-
-#include "TI_Vec3D.h"
-#include "TI_Quat3D.h"
 
 class TI_VoxelyzeKernel;
 class TI_Voxel;
@@ -45,7 +40,7 @@ public:
 
 	CUDA_CALLABLE_MEMBER float updateStrain(float axialStrain); //updates strainNeg and strainPos according to the provided axial strain. returns current stress as well (MPa)
 
-	CUDA_CALLABLE_MEMBER bool isLocalVelocityValid() const {return boolStates & LOCAL_VELOCITY_VALID ? true : false;} //
+	CUDA_CALLABLE_MEMBER bool isLocalVelocityValid() const {printf("boolStates %d , LOCAL_VELOCITY_VALID %d\n", boolStates, LOCAL_VELOCITY_VALID); return boolStates & LOCAL_VELOCITY_VALID ? true : false;} //
 	CUDA_CALLABLE_MEMBER void setBoolState(linkFlags flag, bool set=true) {set ? boolStates |= (int)flag : boolStates &= ~(int)flag;}
 
 	//beam parameters

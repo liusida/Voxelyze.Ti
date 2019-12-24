@@ -6,6 +6,8 @@
 
 #include "TI_External.h"
 #include "TI_MaterialVoxel.h"
+#include "TI_Link.h"
+#include "TI_Collision.h"
 
 class TI_Collision;
 
@@ -79,7 +81,7 @@ public:
 	CUDA_CALLABLE_MEMBER float transverseArea(linkAxis axis); //!< Returns the transverse area of this voxel with respect to the specified axis. This would normally be called only internally, but can be used to calculate the correct relationship between force and stress for this voxel if Poisson's ratio is non-zero.
 	CUDA_CALLABLE_MEMBER float transverseStrainSum(linkAxis axis); //!< Returns the sum of the current strain of this voxel in the two mutually perpindicular axes to the specified axis. This would normally be called only internally, but can be used to correctly calculate stress for this voxel if Poisson's ratio is non-zero.
 
-	CUDA_CALLABLE_MEMBER float dampingMultiplier() {return 2*mat->_sqrtMass*mat->zetaInternal/previousDt;} //!< Returns the damping multiplier for this voxel. This would normally be called only internally for the internal damping calculations.
+	CUDA_CALLABLE_MEMBER float dampingMultiplier() {printf("dampingMultiplier. previousDt:%f\n", previousDt); return 2*mat->_sqrtMass*mat->zetaInternal/previousDt;} //!< Returns the damping multiplier for this voxel. This would normally be called only internally for the internal damping calculations.
 
 	//a couple global convenience functions to have wherever the link enums are used
 	CUDA_CALLABLE_MEMBER static inline linkAxis toAxis(linkDirection direction) {return (linkAxis)((int)direction/2);} //!< Returns the link axis of the specified link direction.
@@ -132,7 +134,7 @@ public:
 
 	float previousDt; //remember the duration of the last timestep of this voxel
 
-	TI_Vec3D<float>* lastColWatchPosition;
+	TI_Vec3D<float> lastColWatchPosition;
 	TI_vector<TI_Collision*> colWatch;
 	TI_vector<TI_Voxel*> nearby;
 

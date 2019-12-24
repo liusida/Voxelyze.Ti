@@ -11,7 +11,7 @@ TI_VoxelyzeKernel::TI_VoxelyzeKernel( CVoxelyze* vx )
         TI_Voxel * d_voxel;
         gpuErrchk(cudaMalloc((void **) &d_voxel, sizeof(TI_Voxel)));
         //set values for GPU memory space
-        TI_Voxel temp = TI_Voxel(voxel);
+        TI_Voxel temp(voxel);
         gpuErrchk(cudaMemcpy(d_voxel, &temp, sizeof(TI_Voxel), cudaMemcpyHostToDevice));
         //save the pointer
         d_voxels.push_back(d_voxel);

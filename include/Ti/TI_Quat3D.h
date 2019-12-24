@@ -17,6 +17,7 @@ See <http://www.opensource.org/licenses/lgpl-3.0.html> for license details.
 
 #include <math.h>
 #include <float.h>
+#include "Quat3D.h"
 #include "TI_Vec3D.h"
 
 #define PI 3.14159265358979
@@ -53,6 +54,8 @@ public:
 	
 
 	//constructors
+	TI_Quat3D(const Quat3D<T> *QuatIn) : w(1), x(0), y(0), z(0) { if (QuatIn) {w = QuatIn->w; x = QuatIn->x; y = QuatIn->y; z = QuatIn->z;} }
+	TI_Quat3D(const Quat3D<T> QuatIn) { w = QuatIn.w; x = QuatIn.x; y = QuatIn.y; z = QuatIn.z; }
 	CUDA_CALLABLE_MEMBER TI_Quat3D(void) : w(1), x(0), y(0), z(0) {} //!< Constructor. Initialzes w, x, y, z to zero.
 	CUDA_CALLABLE_MEMBER TI_Quat3D(const T dw, const T dx, const T dy, const T dz) {w=dw; x=dx; y=dy; z=dz;} //!< Constructor with specified individual values.
 	CUDA_CALLABLE_MEMBER TI_Quat3D(const TI_Quat3D& QuatIn) {w = QuatIn.w; x = QuatIn.x; y = QuatIn.y; z = QuatIn.z;} //!< Copy constructor

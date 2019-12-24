@@ -25,6 +25,7 @@ public:
 	T z; //!< The current Z value.
 
 	//Constructors
+	TI_Vec3D(const Vec3D<T>& s) {x = s.x; y = s.y; z = s.z;}
 	CUDA_CALLABLE_MEMBER TI_Vec3D() :x(0), y(0), z(0) {} //!< Constructor. Initialzes x, y, z to zero.
 	CUDA_CALLABLE_MEMBER TI_Vec3D(const T dx, const T dy, const T dz) {x = dx; y = dy; z = dz;} //!< Constructor with specified individual values.
 	CUDA_CALLABLE_MEMBER TI_Vec3D(const TI_Vec3D& s) {x = s.x; y = s.y; z = s.z;} //!< Copy constructor.

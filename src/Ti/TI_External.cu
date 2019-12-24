@@ -1,14 +1,19 @@
 #include "TI_External.h"
 
+TI_External::TI_External( CVX_External* p ) :
+dofFixed(p->dofFixed), extForce(p->extForce), extMoment(p->extMoment),
+extTranslation(p->extTranslation), extRotation(p->extRotation), 
+_extRotationQ(p->_extRotationQ) {
+
+}
+
 CUDA_CALLABLE_MEMBER TI_External::TI_External() 
 {
-	_extRotationQ = 0;
 	reset();
 }
 
 CUDA_CALLABLE_MEMBER TI_External::~TI_External()
 {
-	if (_extRotationQ) delete _extRotationQ;
 }
 
 
@@ -89,11 +94,10 @@ CUDA_CALLABLE_MEMBER void TI_External::clearDisplacementAll()
 CUDA_CALLABLE_MEMBER void TI_External::rotationChanged()
 {
 	if (extRotation != TI_Vec3D<double>()){
-		if (!_extRotationQ) _extRotationQ = new TI_Quat3D<double>;
-		*_extRotationQ = TI_Quat3D<double>(extRotation);
+		_extRotationQ = TI_Quat3D<double>(extRotation);
 	}
 	else { //rotation is zero in all axes
-		if (_extRotationQ) *_extRotationQ = TI_Quat3D<double>();
+		_extRotationQ = TI_Quat3D<double>();
 	}
 }
 

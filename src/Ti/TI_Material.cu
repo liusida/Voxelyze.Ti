@@ -2,11 +2,13 @@
 
 TI_Material::TI_Material( CVX_Material* p ):
 linear(p->linear), E(p->E), sigmaYield(p->sigmaYield), sigmaFail(p->sigmaFail),
-epsilonYield(p->epsilonYield), epsilonFail(p->epsilonFail), nu(p->nu),rho(p->rho),
+epsilonYield(p->epsilonYield), epsilonFail(p->epsilonFail), 
+strainData(p->strainData), stressData(p->stressData),
+nu(p->nu),rho(p->rho),
 alphaCTE(p->alphaCTE), muStatic(p->muStatic), muKinetic(p->muKinetic),
 zetaInternal(p->zetaInternal), zetaGlobal(p->zetaGlobal), zetaCollision(p->zetaCollision),
 _eHat(p->_eHat) {
-
+	
 }
 
 CUDA_CALLABLE_MEMBER TI_Material::TI_Material(float youngsModulus, float density)
@@ -71,15 +73,17 @@ CUDA_CALLABLE_MEMBER void TI_Material::clear()
 
 CUDA_CALLABLE_MEMBER float TI_Material::stress(float strain, float transverseStrainSum, bool forceLinear)
 {
+	printf("~~~>in stress\n");
 	//reference: http://www.colorado.edu/engineering/CAS/courses.d/Structures.d/IAST.Lect05.d/IAST.Lect05.pdf page 10
 	if (isFailed(strain)) return 0.0f; //if a failure point is set and exceeded, we've broken!
-	
+	printf("~~~>1\n");
+	printf("%d\n", strainData.size());
 	if (strain <= strainData[1] || linear || forceLinear){ //for compression/first segment and linear materials (forced or otherwise), simple calculation
+		printf("~~~>2\n");
 		if (nu==0.0f) return E*strain;
 		else return _eHat*((1-nu)*strain + nu*transverseStrainSum); 
 //		else return eHat()*((1-nu)*strain + nu*transverseStrainSum); 
 	}
-
 	//the non-linear feature with non-zero poissons ratio is currently experimental
 	int DataCount = modelDataPoints();
 	for (int i=2; i<DataCount; i++){ //go through each segment in the material model (skipping the first segment because it has already been handled.
@@ -96,6 +100,7 @@ CUDA_CALLABLE_MEMBER float TI_Material::stress(float strain, float transverseStr
 			}
 		}
 	}
+	printf("~~~>3\n");
 
 	return 0.0f;
 }

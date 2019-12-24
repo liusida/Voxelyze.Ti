@@ -3,21 +3,30 @@
 #include "TI_Link.h"
 #include "TI_MaterialLink.h"
 
-TI_Link::TI_Link(CVX_Link* p, TI_VoxelyzeKernel* k)
+TI_Link::TI_Link(CVX_Link* p, TI_VoxelyzeKernel* k) :
+forceNeg(p->forceNeg), forcePos(p->forcePos),
+momentNeg(p->momentNeg), momentPos(p->momentPos),
+strain(p->strain), maxStrain(p->maxStrain),
+boolStates(p->boolStates), axis(p->axis),
+strainRatio(p->strainRatio), 
+pos2(p->pos2), angle1v(p->angle1v), angle2v(p->angle2v),
+angle1(p->angle1), angle2(p->angle2), smallAngle(p->smallAngle),
+currentRestLength(p->currentRestLength), currentTransverseArea(p->currentTransverseArea),
+currentTransverseStrainSum(p->currentTransverseStrainSum),
+_stress(p->_stress)
 {
     _link = p;
     _kernel = k;
 
-    pVNeg = getGPUPointer(p->pVNeg);
-    pVPos = getGPUPointer(p->pVPos);
+    pVNeg = getDevPtrFromHostPtr(p->pVNeg);
+    pVPos = getDevPtrFromHostPtr(p->pVPos);
 
-	mat = new TI_MaterialLink(p->mat);
-	
-    strain = p->strain;
-    pos2 = p->pos2;
+	gpuErrchk(cudaMalloc((void **) &mat, sizeof(TI_MaterialLink)));
+	TI_MaterialLink temp(p->mat);
+	gpuErrchk(cudaMemcpy(mat, &temp, sizeof(TI_MaterialLink), cudaMemcpyHostToDevice));
 }
 
-TI_Voxel* TI_Link::getGPUPointer(CVX_Voxel* p) {
+TI_Voxel* TI_Link::getDevPtrFromHostPtr(CVX_Voxel* p) {
     //search host pointer in _kernel->h_voxels, get the index and get GPU pointer from _kernel->d_voxels.
 	std::vector<CVX_Voxel *>::iterator it;
     it = find (_kernel->h_voxels.begin(), _kernel->h_voxels.end(), p);
@@ -120,24 +129,21 @@ CUDA_CALLABLE_MEMBER void TI_Link::updateForces()
 	TI_Vec3D<double> dAngle1 = 0.5*(angle1v-oldAngle1v);
 	TI_Vec3D<double> dAngle2 = 0.5*(angle2v-oldAngle2v);
 
-	bool b = currentTransverseStrainSum != 0;
-	printf("---> 3\n");
-	bool a = mat->isXyzIndependent();
-	printf("---> 4\n");
-	if (!a || b) {
-		printf("--->6\n");
-	}
 	//if volume effects...
 	if (!mat->isXyzIndependent() || currentTransverseStrainSum != 0) { //currentTransverseStrainSum != 0 catches when we disable poissons mid-simulation
 		printf("---> 4\n");
 		//updateTransverseInfo(); 
 	}
 	printf("---> 5\n");
+	printf("forceNeg.x---> %f.\n", forceNeg.x);
 
 	_stress = updateStrain((float)(pos2.x/currentRestLength));
+	printf("---> 6\n");
 	if (isFailed()){forceNeg = forcePos = momentNeg = momentPos = TI_Vec3D<double>(0,0,0); return;}
+	printf("---> 7\n");
 
 	float b1=mat->_b1, b2=mat->_b2, b3=mat->_b3, a2=mat->_a2; //local copies
+	printf("---> 8\n");
 	//Beam equations. All relevant terms are here, even though some are zero for small angle and others are zero for large angle (profiled as negligible performance penalty)
 	forceNeg = TI_Vec3D<double> (	_stress*currentTransverseArea, //currentA1*pos2.x,
 								b1*pos2.y - b2*(angle1v.z + angle2v.z),
@@ -151,26 +157,39 @@ CUDA_CALLABLE_MEMBER void TI_Link::updateForces()
 								-b2*pos2.z - b3*(angle1v.y + 2*angle2v.y),
 								b2*pos2.y - b3*(angle1v.z + 2*angle2v.z));
 
+	printf("---> 9\n");
+	printf("forceNeg.x---> %f.\n", forceNeg.x);
 
 	//local damping:
 	if (isLocalVelocityValid()){ //if we don't have the basis for a good damping calculation, don't do any damping.
+		printf("---> 9.1\n");
+		printf("forceNeg.x---> %f.\n", forceNeg.x);
 		float sqA1=mat->_sqA1, sqA2xIp=mat->_sqA2xIp,sqB1=mat->_sqB1, sqB2xFMp=mat->_sqB2xFMp, sqB3xIp=mat->_sqB3xIp;
 		TI_Vec3D<double> posCalc(	sqA1*dPos2.x,
 								sqB1*dPos2.y - sqB2xFMp*(dAngle1.z+dAngle2.z),
 								sqB1*dPos2.z + sqB2xFMp*(dAngle1.y+dAngle2.y));
-
+		printf("---> 9.3\n");
+		printf("forceNeg.x---> %f.\n", forceNeg.x);
+		printf("%p\n", pVNeg);
+		printf("pVNeg->dampingMultiplier() %f\n", pVNeg->dampingMultiplier());
 		forceNeg += pVNeg->dampingMultiplier()*posCalc;
 		forcePos -= pVPos->dampingMultiplier()*posCalc;
+		printf("---> 9.4\n");
+		printf("forceNeg.x---> %f.\n", forceNeg.x);
 
 		momentNeg -= 0.5*pVNeg->dampingMultiplier()*TI_Vec3D<>(	-sqA2xIp*(dAngle2.x - dAngle1.x),
 																sqB2xFMp*dPos2.z + sqB3xIp*(2*dAngle1.y + dAngle2.y),
 																-sqB2xFMp*dPos2.y + sqB3xIp*(2*dAngle1.z + dAngle2.z));
+		printf("---> 9.5\n");
+		printf("forceNeg.x---> %f.\n", forceNeg.x);
 		momentPos -= 0.5*pVPos->dampingMultiplier()*TI_Vec3D<>(	sqA2xIp*(dAngle2.x - dAngle1.x),
 																sqB2xFMp*dPos2.z + sqB3xIp*(dAngle1.y + 2*dAngle2.y),
 																-sqB2xFMp*dPos2.y + sqB3xIp*(dAngle1.z + 2*dAngle2.z));
 
 	}
 	else setBoolState(LOCAL_VELOCITY_VALID, true); //we're good for next go-around unless something changes
+	printf("---> 10\n");
+	printf("forceNeg.x---> %f.\n", forceNeg.x);
 
 	//	transform forces and moments to local voxel coordinates
 	if (!smallAngle){
@@ -179,14 +198,18 @@ CUDA_CALLABLE_MEMBER void TI_Link::updateForces()
 	}
 	forcePos = angle2.RotateVec3DInv(forcePos);
 	momentPos = angle2.RotateVec3DInv(momentPos);
+	printf("---> 11\n");
+	printf("forceNeg.x---> %f.\n", forceNeg.x);
 
 	toAxisOriginal(&forceNeg);
 	toAxisOriginal(&forcePos);
 	toAxisOriginal(&momentNeg);
 	toAxisOriginal(&momentPos);
+	printf("---> 12\n");
+	printf("forceNeg.x---> %f.\n", forceNeg.x);
 
-	assert(!(forceNeg.x != forceNeg.x) || !(forceNeg.y != forceNeg.y) || !(forceNeg.z != forceNeg.z)); //assert non QNAN
-	assert(!(forcePos.x != forcePos.x) || !(forcePos.y != forcePos.y) || !(forcePos.z != forcePos.z)); //assert non QNAN
+	// assert(!(forceNeg.x != forceNeg.x) || !(forceNeg.y != forceNeg.y) || !(forceNeg.z != forceNeg.z)); //assert non QNAN
+	// assert(!(forcePos.x != forcePos.x) || !(forcePos.y != forcePos.y) || !(forcePos.z != forcePos.z)); //assert non QNAN
 
 
 }
@@ -194,29 +217,38 @@ CUDA_CALLABLE_MEMBER void TI_Link::updateForces()
 
 CUDA_CALLABLE_MEMBER float TI_Link::updateStrain(float axialStrain)
 {
+	int di = 0;
+	printf("==>in updateStrain\n");
 	strain = axialStrain; //redundant?
+	printf("==>1\n");
 
 	if (mat->linear){
+		printf("==>2\n");
 		if (axialStrain > maxStrain) maxStrain = axialStrain; //remember this maximum for easy reference
+		printf("==>3\n");
 		return mat->stress(axialStrain, currentTransverseStrainSum);
 	}
 	else {
 		float returnStress;
+		printf("==>3\n");
 
 		if (axialStrain > maxStrain){ //if new territory on the stress/strain curve
 			maxStrain = axialStrain; //remember this maximum for easy reference
 			returnStress = mat->stress(axialStrain, currentTransverseStrainSum);
+			printf("==>4\n");
 			
 			if (mat->nu != 0.0f) strainOffset = maxStrain-mat->stress(axialStrain)/(mat->_eHat*(1-mat->nu)); //precalculate strain offset for when we back off
 			else strainOffset = maxStrain-returnStress/mat->E; //precalculate strain offset for when we back off
 
 		}
 		else { //backed off a non-linear material, therefore in linear region.
+			printf("==>5\n");
 			float relativeStrain = axialStrain-strainOffset; // treat the material as linear with a strain offset according to the maximum plastic deformation
 			
 			if (mat->nu != 0.0f) returnStress = mat->stress(relativeStrain, currentTransverseStrainSum, true);
 			else returnStress = mat->E*relativeStrain;
 		}
+		printf("==>6\n");
 		return returnStress;
 
 	}
