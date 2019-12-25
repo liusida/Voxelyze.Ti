@@ -73,12 +73,9 @@ CUDA_DEVICE void TI_Material::clear()
 
 CUDA_DEVICE float TI_Material::stress(float strain, float transverseStrainSum, bool forceLinear)
 {
-	debugDev();
 	//reference: http://www.colorado.edu/engineering/CAS/courses.d/Structures.d/IAST.Lect05.d/IAST.Lect05.pdf page 10
 	if (isFailed(strain)) return 0.0f; //if a failure point is set and exceeded, we've broken!
-	debugDev(printf("strainData.size()=%d",strainData.size()));
 	if (strain <= strainData[1] || linear || forceLinear){ //for compression/first segment and linear materials (forced or otherwise), simple calculation
-		debugDev();
 		if (nu==0.0f) return E*strain;
 		else return _eHat*((1-nu)*strain + nu*transverseStrainSum); 
 //		else return eHat()*((1-nu)*strain + nu*transverseStrainSum); 
@@ -99,8 +96,6 @@ CUDA_DEVICE float TI_Material::stress(float strain, float transverseStrainSum, b
 			}
 		}
 	}
-	debugDev();
-
 	return 0.0f;
 }
 

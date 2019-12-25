@@ -75,16 +75,13 @@ void gpu_update_force(TI_Link** links, int num) {
     if (gindex < num) {
         TI_Link* t = links[gindex];
         t->updateForces();
-        debugDev();
         if (t->axialStrain() > 100) { printf("ERROR: Diverged."); }
-        debugDev();
     }
 }
 __global__
 void gpu_update_voxel(TI_Voxel** voxels, int num, double dt) {
     int gindex = threadIdx.x + blockIdx.x * blockDim.x; 
     if (gindex < num) {
-        debugDev();
         TI_Voxel* t = voxels[gindex];
         t->timeStep(dt);
     }
@@ -97,7 +94,7 @@ void TI_VoxelyzeKernel::doTimeStep(double dt) {
     cudaDeviceSynchronize();
     
     //TODO:updateCollision
-    debugHost( printf("TODO:updateCollision") );
+    //debugHost( printf("TODO:updateCollision") );
     //gpu_update_voxel
     blockSize = 256;
     N = d_voxels.size();
@@ -106,4 +103,22 @@ void TI_VoxelyzeKernel::doTimeStep(double dt) {
     cudaDeviceSynchronize();
 
     currentTime += dt;
+}
+
+void TI_VoxelyzeKernel::readVoxelsPosFromDev() {
+    for (auto l:read_links) delete l;
+    for (auto v:read_voxels) delete v;
+    read_links.clear();
+    read_voxels.clear();
+
+    for (unsigned i=0;i<d_voxels.size();i++) {
+        TI_Voxel* temp = (TI_Voxel*) malloc(sizeof(TI_Voxel));
+        cudaMemcpy(temp, d_voxels[i], sizeof(TI_Voxel), cudaMemcpyDeviceToHost);
+        read_voxels.push_back(temp);
+    }
+    for (unsigned i=0;i<d_links.size();i++) {
+        TI_Link* temp = (TI_Link*) malloc(sizeof(TI_Link));
+        cudaMemcpy(temp, d_links[i], sizeof(TI_Link), cudaMemcpyDeviceToHost);
+        read_links.push_back(temp);
+    }
 }

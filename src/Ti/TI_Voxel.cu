@@ -37,11 +37,11 @@ previousDt(p->previousDt) {
 	}
 	if (p->colWatch) {
 		//colWatch = (*p->colWatch);
-		debugDev();
+		
 	}
 	if (p->nearby) {
 		//nearby = (*p->nearby);
-		debugDev();
+		
 	}
 }
 
@@ -165,35 +165,34 @@ CUDA_DEVICE TI_Vec3D<float> TI_Voxel::cornerOffset(voxelCorner corner) const
 //http://klas-physics.googlecode.com/svn/trunk/src/general/Integrator.cpp (reference)
 CUDA_DEVICE void TI_Voxel::timeStep(float dt)
 {
-	debugDev(printf("previousDt=%f",previousDt));
 	previousDt = dt;
 	if (dt == 0.0f) return;
 
 	if (ext && ext->isFixedAll()){
-		debugDev();
+		
 		pos = originalPosition() + ext->translation();
 		orient = ext->rotationQuat();
 		haltMotion();
 		return;
 	}
-	debugDev();
+	
 	//Translation
 	TI_Vec3D<double> curForce = force();
-	debugDev();
+	
 	TI_Vec3D<double> fricForce = curForce;
-	debugDev();
+	
 	if (isFloorEnabled()) floorForce(dt, &curForce); //floor force needs dt to calculate threshold to "stop" a slow voxel into static friction.
-	debugDev();
+	
 	fricForce = curForce - fricForce;
-	debugDev();
+	
 	assert(!(curForce.x != curForce.x) || !(curForce.y != curForce.y) || !(curForce.z != curForce.z)); //assert non QNAN
 	linMom += curForce*dt;
-	debugDev();
+	
 	TI_Vec3D<double> translate(linMom*(dt*mat->_massInverse)); //movement of the voxel this timestep
-	debugDev();
+	
 //	we need to check for friction conditions here (after calculating the translation) and stop things accordingly
 	if (isFloorEnabled() && floorPenetration() >= 0){ //we must catch a slowing voxel here since it all boils down to needing access to the dt of this timestep.
-		debugDev();
+		
 		double work = fricForce.x*translate.x + fricForce.y*translate.y; //F dot disp
 		double hKe = 0.5*mat->_massInverse*(linMom.x*linMom.x + linMom.y*linMom.y); //horizontal kinetic energy
 
@@ -205,16 +204,16 @@ CUDA_DEVICE void TI_Voxel::timeStep(float dt)
 		}
 	}
 	else setFloorStaticFriction(false);
-	debugDev();
+	
 
 	pos += translate;
 
 	//Rotation
 	TI_Vec3D<> curMoment = moment();
 	angMom += curMoment*dt;
-	debugDev();
+	
 	orient = TI_Quat3D<>(angMom*(dt*mat->_momentInertiaInverse))*orient; //update the orientation
-	debugDev();
+	
 	if (ext){
 		double size = mat->nominalSize();
 		if (ext->isFixed(X_TRANSLATE)) {pos.x = ix*size + ext->translation().x; linMom.x=0;}
@@ -235,36 +234,35 @@ CUDA_DEVICE void TI_Voxel::timeStep(float dt)
 		}
 	}
 
-	debugDev();
+	
 	poissonsStrainInvalid = true;
 }
 
 CUDA_DEVICE TI_Vec3D<double> TI_Voxel::force()
 {
-	debugDev();
+	
 	//forces from internal bonds
 	TI_Vec3D<double> totalForce(0,0,0);
 	for (int i=0; i<6; i++){ 
-		debugDev(printf("\tlinks[%d]: %p\t", i, links[i]));
 		if (links[i]) totalForce += links[i]->force(isNegative((linkDirection)i)); //total force in LCS
 	}
-	debugDev();
+	
 	totalForce = orient.RotateVec3D(totalForce); //from local to global coordinates
 	assert(!(totalForce.x != totalForce.x) || !(totalForce.y != totalForce.y) || !(totalForce.z != totalForce.z)); //assert non QNAN
-	debugDev();
+	
 
 	//other forces
 	if (externalExists()) totalForce += external()->force(); //external forces
 	totalForce -= velocity()*mat->globalDampingTranslateC(); //global damping f-cv
 	totalForce.z += mat->gravityForce(); //gravity, according to f=mg
-	debugDev();
+	
 
 	if (isCollisionsEnabled()){
 		for (int i=0;i<colWatch.size();i++){
 			totalForce -= colWatch[i]->contactForce(this);
 		}
 	}
-	debugDev();
+	
 
 	return totalForce;
 }

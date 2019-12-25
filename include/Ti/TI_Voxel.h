@@ -13,6 +13,7 @@ class TI_Collision;
 
 class TI_Voxel {
 public:
+	TI_Voxel()=default;
     TI_Voxel(CVX_Voxel* p, TI_VoxelyzeKernel* k);
     TI_Link* getDevPtrFromHostPtr(CVX_Link* p);
 

@@ -75,6 +75,10 @@ Quat3D<double> CVX_Link::orientLink(/*double restLength*/) //updates pos2, angle
 
 	angle1 = toAxisX(pVNeg->orientation());
 	angle2 = toAxisX(pVPos->orientation());
+	debugHost( printf("pVPos: %f, %f, %f", pVPos->pos.x, pVPos->pos.y, pVPos->pos.z) );
+	auto temp = pVPos->orientation();
+	debugHost( printf("pVPos->orientation(): %f, %f, %f, %f\t", temp.w, temp.x, temp.y, temp.z) );
+	debugHost( printf("angle2: %f, %f, %f, %f\t", angle2.w, angle2.x, angle2.y, angle2.z) );
 
 	Quat3D<double> totalRot = angle1.Conjugate(); //keep track of the total rotation of this bond (after toAxisX())
 	pos2 = totalRot.RotateVec3D(pos2);
@@ -207,7 +211,6 @@ void CVX_Link::updateForces()
 
 	assert(!(forceNeg.x != forceNeg.x) || !(forceNeg.y != forceNeg.y) || !(forceNeg.z != forceNeg.z)); //assert non QNAN
 	assert(!(forcePos.x != forcePos.x) || !(forcePos.y != forcePos.y) || !(forcePos.z != forcePos.z)); //assert non QNAN
-	debugHost(printf("forceNeg.x---> %f.", forceNeg.x));
 	
 
 

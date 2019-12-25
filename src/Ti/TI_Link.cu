@@ -6,7 +6,7 @@
 TI_Link::TI_Link(CVX_Link* p, TI_VoxelyzeKernel* k) :
 forceNeg(p->forceNeg), forcePos(p->forcePos),
 momentNeg(p->momentNeg), momentPos(p->momentPos),
-strain(p->strain), maxStrain(p->maxStrain),
+strain(p->strain), maxStrain(p->maxStrain), strainOffset(p->strainOffset),
 boolStates(p->boolStates), axis(p->axis),
 strainRatio(p->strainRatio), 
 pos2(p->pos2), angle1v(p->angle1v), angle2v(p->angle2v),
@@ -41,7 +41,7 @@ TI_Voxel* TI_Link::getDevPtrFromHostPtr(CVX_Voxel* p) {
 }
 
 CUDA_DEVICE void TI_Link::test() {
-	debugDev();
+	
 }
 
 
@@ -52,6 +52,10 @@ CUDA_DEVICE TI_Quat3D<double> TI_Link::orientLink(/*double restLength*/) //updat
 
 	angle1 = toAxisX(pVNeg->orientation());
 	angle2 = toAxisX(pVPos->orientation());
+	debugDev( printf("pVPos: %f, %f, %f\t", pVPos->pos.x, pVPos->pos.y, pVPos->pos.z) );
+	auto temp = pVPos->orientation();
+	debugDev( printf("pVPos->orientation(): %f, %f, %f, %f\t", temp.w, temp.x, temp.y, temp.z) );
+	debugDev( printf("angle2: %f, %f, %f, %f\t", angle2.w, angle2.x, angle2.y, angle2.z) );
 
 	TI_Quat3D<double> totalRot = angle1.Conjugate(); //keep track of the total rotation of this bond (after toAxisX())
 	pos2 = totalRot.RotateVec3D(pos2);
@@ -121,9 +125,9 @@ CUDA_DEVICE void TI_Link::updateTransverseInfo()
 CUDA_DEVICE void TI_Link::updateForces()
 {
 	TI_Vec3D<double> oldPos2 = pos2, oldAngle1v = angle1v, oldAngle2v = angle2v; //remember the positions/angles from last timestep to calculate velocity
-	debugDev();
+	
 	orientLink(/*restLength*/); //sets pos2, angle1, angle2
-	debugDev();
+	
 
 	TI_Vec3D<double> dPos2 = 0.5*(pos2-oldPos2); //deltas for local damping. velocity at center is half the total velocity
 	TI_Vec3D<double> dAngle1 = 0.5*(angle1v-oldAngle1v);
@@ -131,18 +135,18 @@ CUDA_DEVICE void TI_Link::updateForces()
 
 	//if volume effects..
 	if (!mat->isXyzIndependent() || currentTransverseStrainSum != 0) { //currentTransverseStrainSum != 0 catches when we disable poissons mid-simulation
-		debugDev();
+		
 		//updateTransverseInfo(); 
 	}
-	debugDev(printf("forceNeg.x---> %f.", forceNeg.x));
+	
 
 	_stress = updateStrain((float)(pos2.x/currentRestLength));
-	debugDev();
+	
 	if (isFailed()){forceNeg = forcePos = momentNeg = momentPos = TI_Vec3D<double>(0,0,0); return;}
-	debugDev();
+	
 
 	float b1=mat->_b1, b2=mat->_b2, b3=mat->_b3, a2=mat->_a2; //local copies
-	debugDev();
+	
 	//Beam equations. All relevant terms are here, even though some are zero for small angle and others are zero for large angle (profiled as negligible performance penalty)
 	forceNeg = TI_Vec3D<double> (	_stress*currentTransverseArea, //currentA1*pos2.x,
 								b1*pos2.y - b2*(angle1v.z + angle2v.z),
@@ -156,27 +160,25 @@ CUDA_DEVICE void TI_Link::updateForces()
 								-b2*pos2.z - 3*(angle1v.y + 2*angle2v.y),
 								b2*pos2.y - b3*(angle1v.z + 2*angle2v.z));
 
-	debugDev(printf("forceNeg.x---> %f.", forceNeg.x));
+	
 	
 
 	//local damping:
 	if (isLocalVelocityValid()){ //if we don't have the basis for a good damping calculation, don't do any damping.
-		debugDev(printf("forceNeg.x---> %f.", forceNeg.x));		
+				
 		float sqA1=mat->_sqA1, sqA2xIp=mat->_sqA2xIp,sqB1=mat->_sqB1, sqB2xFMp=mat->_sqB2xFMp, sqB3xIp=mat->_sqB3xIp;
 		TI_Vec3D<double> posCalc(	sqA1*dPos2.x,
 								sqB1*dPos2.y - sqB2xFMp*(dAngle1.z+dAngle2.z),
 								sqB1*dPos2.z + sqB2xFMp*(dAngle1.y+dAngle2.y));
-		debugDev(printf("forceNeg.x---> %f.", forceNeg.x));
-		debugDev(printf("%p", pVNeg));
-		debugDev(printf("pVNeg->dampingMultiplier() f", pVNeg->dampingMultiplier()));
+		
 		forceNeg += pVNeg->dampingMultiplier()*posCalc;
 		forcePos -= pVPos->dampingMultiplier()*posCalc;
-		debugDev(printf("forceNeg.x---> %f.", forceNeg.x));
+		
 
 		momentNeg -= 0.5*pVNeg->dampingMultiplier()*TI_Vec3D<>(	-sqA2xIp*(dAngle2.x - dAngle1.x),
 																sqB2xFMp*dPos2.z + sqB3xIp*(2*dAngle1.y + dAngle2.y),
 																-sqB2xFMp*dPos2.y + sqB3xIp*(2*dAngle1.z + dAngle2.z));
-		debugDev(printf("forceNeg.x---> %f.", forceNeg.x));
+		
 		
 		momentPos -= 0.5*pVPos->dampingMultiplier()*TI_Vec3D<>(	sqA2xIp*(dAngle2.x - dAngle1.x),
 																sqB2xFMp*dPos2.z + sqB3xIp*(dAngle1.y + 2*dAngle2.y),
@@ -184,7 +186,7 @@ CUDA_DEVICE void TI_Link::updateForces()
 
 	}
 	else setBoolState(LOCAL_VELOCITY_VALID, true); //we're good for next go-around unless something changes
-	debugDev(printf("forceNeg.x---> %f.", forceNeg.x));
+	
 
 	//	transform forces and moments to local voxel coordinates
 	if (!smallAngle){
@@ -193,14 +195,14 @@ CUDA_DEVICE void TI_Link::updateForces()
 	}
 	forcePos = angle2.RotateVec3DInv(forcePos);
 	momentPos = angle2.RotateVec3DInv(momentPos);
-	debugDev(printf("forceNeg.x---> %f.", forceNeg.x));
+	
 
 
 	toAxisOriginal(&forceNeg);
 	toAxisOriginal(&forcePos);
 	toAxisOriginal(&momentNeg);
 	toAxisOriginal(&momentPos);
-	debugDev(printf("forceNeg.x---> %f.", forceNeg.x));
+	
 
 
 	// assert(!(forceNeg.x != forceNeg.x) || !(forceNeg.y != forceNeg.y) || !(forceNeg.z != forceNeg.z)); //assert non QNAN
@@ -213,37 +215,37 @@ CUDA_DEVICE void TI_Link::updateForces()
 CUDA_DEVICE float TI_Link::updateStrain(float axialStrain)
 {
 	int di = 0;
-	debugDev();
+	
 	strain = axialStrain; //redundant?
-	debugDev();
+	
 
 	if (mat->linear){
-		debugDev();
+		
 		if (axialStrain > maxStrain) maxStrain = axialStrain; //remember this maximum for easy reference
-		debugDev();
+		
 		return mat->stress(axialStrain, currentTransverseStrainSum);
 	}
 	else {
 		float returnStress;
-		debugDev();
+		
 
 		if (axialStrain > maxStrain){ //if new territory on the stress/strain curve
 			maxStrain = axialStrain; //remember this maximum for easy reference
 			returnStress = mat->stress(axialStrain, currentTransverseStrainSum);
-			debugDev();
+			
 			
 			if (mat->nu != 0.0f) strainOffset = maxStrain-mat->stress(axialStrain)/(mat->_eHat*(1-mat->nu)); //precalculate strain offset for when we back off
 			else strainOffset = maxStrain-returnStress/mat->E; //precalculate strain offset for when we back off
 
 		}
 		else { //backed off a non-linear material, therefore in linear region.
-			debugDev();
+			
 			float relativeStrain = axialStrain-strainOffset; // treat the material as linear with a strain offset according to the maximum plastic deformation
 			
 			if (mat->nu != 0.0f) returnStress = mat->stress(relativeStrain, currentTransverseStrainSum, true);
 			else returnStress = mat->E*relativeStrain;
 		}
-		debugDev();
+		
 		return returnStress;
 
 	}
