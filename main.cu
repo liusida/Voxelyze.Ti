@@ -13,6 +13,7 @@ int main(int argc, char** argv) {
 
     CVoxelyze Vx(0.005); //5mm voxels
 
+    
     Vx.enableFloor();
     Vx.enableCollisions();
 
