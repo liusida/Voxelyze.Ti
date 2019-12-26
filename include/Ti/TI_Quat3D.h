@@ -71,6 +71,8 @@ public:
 		*this = TI_Quat3D(theta, Axis); //otherwise for the quaternion from angle-axis. 
 	} //!< Constructs this quaternion to represent the rotation from two vectors. The vectors need not be normalized and are not modified. @param[in] RotateFrom A vector representing a pre-rotation orientation. @param[in] RotateTo A vector representing a post-rotation orientation.
 
+	CUDA_DEVICE inline void debug() { printf("w:%f, x:%f, y:%f, z:%f\t", w, x, y, z); }
+
 	//functions to make code with mixed template parameters work...
 	template <typename U> CUDA_DEVICE TI_Quat3D<T>(const TI_Quat3D<U>& QuatIn) {w = QuatIn.w; x = QuatIn.x; y = QuatIn.y; z = QuatIn.z;} //!< Copy constructor from another template type
 	template <typename U> CUDA_DEVICE TI_Quat3D<T>(const TI_Vec3D<U>& VecIn) {w = 0; x = VecIn.x; y = VecIn.y; z = VecIn.z;} //!< Copies x, y, z from the specified vector and sets w to zero.

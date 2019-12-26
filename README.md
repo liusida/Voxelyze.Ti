@@ -44,3 +44,12 @@ sudo apt install linux-tools-common linux-tools-`uname -r`
 sudo perf record -g ./Voxelyze.Ti
 perf report
 ```
+
+```bash
+sudo nvprof ./Voxelyze.Ti
+sudo nvprof --print-gpu-trace ./Voxelyze.Ti
+```
+
+## time
+
+GPU: 30k voxels, 20k steps, 46s.

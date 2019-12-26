@@ -75,10 +75,10 @@ Quat3D<double> CVX_Link::orientLink(/*double restLength*/) //updates pos2, angle
 
 	angle1 = toAxisX(pVNeg->orientation());
 	angle2 = toAxisX(pVPos->orientation());
-	debugHost( printf("pVPos: %f, %f, %f", pVPos->pos.x, pVPos->pos.y, pVPos->pos.z) );
+	// debugHost( printf("pVPos: %f, %f, %f", pVPos->pos.x, pVPos->pos.y, pVPos->pos.z) );
 	auto temp = pVPos->orientation();
-	debugHost( printf("pVPos->orientation(): %f, %f, %f, %f\t", temp.w, temp.x, temp.y, temp.z) );
-	debugHost( printf("angle2: %f, %f, %f, %f\t", angle2.w, angle2.x, angle2.y, angle2.z) );
+	// debugHost( printf("pVPos->orientation(): %f, %f, %f, %f\t", temp.w, temp.x, temp.y, temp.z) );
+	// debugHost( printf("angle2: %f, %f, %f, %f\t", angle2.w, angle2.x, angle2.y, angle2.z) );
 
 	Quat3D<double> totalRot = angle1.Conjugate(); //keep track of the total rotation of this bond (after toAxisX())
 	pos2 = totalRot.RotateVec3D(pos2);
@@ -174,7 +174,6 @@ void CVX_Link::updateForces()
 	momentPos = Vec3D<double> (	a2*(angle1v.x - angle2v.x),
 								-b2*pos2.z - b3*(angle1v.y + 2*angle2v.y),
 								b2*pos2.y - b3*(angle1v.z + 2*angle2v.z));
-
 
 	//local damping:
 	if (isLocalVelocityValid()){ //if we don't have the basis for a good damping calculation, don't do any damping.

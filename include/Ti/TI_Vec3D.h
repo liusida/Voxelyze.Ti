@@ -30,6 +30,8 @@ public:
 	CUDA_DEVICE TI_Vec3D(const T dx, const T dy, const T dz) {x = dx; y = dy; z = dz;} //!< Constructor with specified individual values.
 	CUDA_DEVICE TI_Vec3D(const TI_Vec3D& s) {x = s.x; y = s.y; z = s.z;} //!< Copy constructor.
 
+	CUDA_DEVICE inline void debug() { debugDevice("Vec3D", printf("x:%f, y:%f, z:%f\t", x, y, z) ); }
+
 #ifdef WIN32
 	CUDA_DEVICE bool IsValid() const {return !_isnan((double)x) && _finite((double)x) && !_isnan((double)y) && _finite((double)y) && !_isnan((double)z) && _finite((double)z);} //!< Returns true if all values are valid numbers.
 #else

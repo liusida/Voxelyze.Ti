@@ -52,10 +52,10 @@ CUDA_DEVICE TI_Quat3D<double> TI_Link::orientLink(/*double restLength*/) //updat
 
 	angle1 = toAxisX(pVNeg->orientation());
 	angle2 = toAxisX(pVPos->orientation());
-	debugDev( printf("pVPos: %f, %f, %f\t", pVPos->pos.x, pVPos->pos.y, pVPos->pos.z) );
+	// debugDev( printf("pVPos: %f, %f, %f\t", pVPos->pos.x, pVPos->pos.y, pVPos->pos.z) );
 	auto temp = pVPos->orientation();
-	debugDev( printf("pVPos->orientation(): %f, %f, %f, %f\t", temp.w, temp.x, temp.y, temp.z) );
-	debugDev( printf("angle2: %f, %f, %f, %f\t", angle2.w, angle2.x, angle2.y, angle2.z) );
+	// debugDev( printf("pVPos->orientation(): %f, %f, %f, %f\t", temp.w, temp.x, temp.y, temp.z) );
+	// debugDev( printf("angle2: %f, %f, %f, %f\t", angle2.w, angle2.x, angle2.y, angle2.z) );
 
 	TI_Quat3D<double> totalRot = angle1.Conjugate(); //keep track of the total rotation of this bond (after toAxisX())
 	pos2 = totalRot.RotateVec3D(pos2);
@@ -157,12 +157,8 @@ CUDA_DEVICE void TI_Link::updateForces()
 								-b2*pos2.z - b3*(2*angle1v.y + angle2v.y),
 								b2*pos2.y - b3*(2*angle1v.z + angle2v.z));
 	momentPos = TI_Vec3D<double> (	a2*(angle1v.x - angle2v.x),
-								-b2*pos2.z - 3*(angle1v.y + 2*angle2v.y),
+								-b2*pos2.z - b3*(angle1v.y + 2*angle2v.y),
 								b2*pos2.y - b3*(angle1v.z + 2*angle2v.z));
-
-	
-	
-
 	//local damping:
 	if (isLocalVelocityValid()){ //if we don't have the basis for a good damping calculation, don't do any damping.
 				
@@ -177,9 +173,7 @@ CUDA_DEVICE void TI_Link::updateForces()
 
 		momentNeg -= 0.5*pVNeg->dampingMultiplier()*TI_Vec3D<>(	-sqA2xIp*(dAngle2.x - dAngle1.x),
 																sqB2xFMp*dPos2.z + sqB3xIp*(2*dAngle1.y + dAngle2.y),
-																-sqB2xFMp*dPos2.y + sqB3xIp*(2*dAngle1.z + dAngle2.z));
-		
-		
+																-sqB2xFMp*dPos2.y + sqB3xIp*(2*dAngle1.z + dAngle2.z));		
 		momentPos -= 0.5*pVPos->dampingMultiplier()*TI_Vec3D<>(	sqA2xIp*(dAngle2.x - dAngle1.x),
 																sqB2xFMp*dPos2.z + sqB3xIp*(dAngle1.y + 2*dAngle2.y),
 																-sqB2xFMp*dPos2.y + sqB3xIp*(dAngle1.z + 2*dAngle2.z));
@@ -195,7 +189,7 @@ CUDA_DEVICE void TI_Link::updateForces()
 	}
 	forcePos = angle2.RotateVec3DInv(forcePos);
 	momentPos = angle2.RotateVec3DInv(momentPos);
-	
+
 
 
 	toAxisOriginal(&forceNeg);

@@ -15,7 +15,7 @@ See <http://www.opensource.org/licenses/lgpl-3.0.html> for license details.
 #include "types.h"
 
 //Possible Linux portability issues: min, max
-
+#include <stdio.h>
 #include <math.h>
 #include <float.h>
 
@@ -45,6 +45,8 @@ public:
 #else
 	bool IsValid() const {return !__isnand(x) && finite(x) && !__isnand(y) && finite(y) && !__isnand(z) && finite(z);} //!< Returns true if all values are valid numbers.
 #endif
+
+	inline void debug() { debugHostx("Vec3D", printf("x:%f, y:%f, z:%f\t", x, y, z) ); }
 
 	//Stuff to make code with mixed template parameters work...
 	template <typename U> Vec3D<T>(const Vec3D<U>& s)						{x = (T)s.x; y = (T)s.y; z = (T)s.z;} //!< Copy constructor from another template type

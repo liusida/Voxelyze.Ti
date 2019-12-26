@@ -213,7 +213,6 @@ CUDA_DEVICE void TI_Voxel::timeStep(float dt)
 	angMom += curMoment*dt;
 	
 	orient = TI_Quat3D<>(angMom*(dt*mat->_momentInertiaInverse))*orient; //update the orientation
-	
 	if (ext){
 		double size = mat->nominalSize();
 		if (ext->isFixed(X_TRANSLATE)) {pos.x = ix*size + ext->translation().x; linMom.x=0;}
@@ -272,10 +271,12 @@ CUDA_DEVICE TI_Vec3D<double> TI_Voxel::moment()
 	//moments from internal bonds
 	TI_Vec3D<double> totalMoment(0,0,0);
 	for (int i=0; i<6; i++){ 
-		if (links[i]) totalMoment += links[i]->moment(isNegative((linkDirection)i)); //total force in LCS
+		if (links[i]) {
+			totalMoment += links[i]->moment(isNegative((linkDirection)i)); //total force in LCS		
+		}
 	}
 	totalMoment = orient.RotateVec3D(totalMoment);
-	
+
 	//other moments
 	if (externalExists()) totalMoment += external()->moment(); //external moments
 	totalMoment -= angularVelocity()*mat->globalDampingRotateC(); //global damping

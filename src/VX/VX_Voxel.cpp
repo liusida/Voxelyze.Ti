@@ -260,8 +260,11 @@ Vec3D<double> CVX_Voxel::moment()
 	//moments from internal bonds
 	Vec3D<double> totalMoment(0,0,0);
 	for (int i=0; i<6; i++){ 
-		if (links[i]) totalMoment += links[i]->moment(isNegative((linkDirection)i)); //total force in LCS
+		if (links[i]) {
+			totalMoment += links[i]->moment(isNegative((linkDirection)i)); //total force in LCS
+		}
 	}
+
 	totalMoment = orient.RotateVec3D(totalMoment);
 	
 	//other moments

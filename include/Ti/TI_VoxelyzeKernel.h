@@ -17,6 +17,11 @@ public:
     ~TI_VoxelyzeKernel();
 
     void doTimeStep(double dt=0.001f);
+
+    void updateCollisions();
+    void regenerateCollisions(float threshRadiusSq);
+    void clearCollisions();
+
     void simpleGPUFunction();
 
     void readVoxelsPosFromDev(); //read only position of voxels.
@@ -25,8 +30,10 @@ public:
 
     thrust::device_vector<TI_Link *> d_links;
     thrust::device_vector<TI_Voxel *> d_voxels;
+    thrust::device_vector<TI_Collision *> d_collisions;
     std::vector<CVX_Link *> h_links;
     std::vector<CVX_Voxel *> h_voxels;
+    std::vector<CVX_Collision *> h_collisions;
 
     std::vector<TI_Link *> read_links;
     std::vector<TI_Voxel *> read_voxels;
@@ -34,6 +41,12 @@ public:
     // h_links[i]  -- coresponding to -->  d_links[i]
 	float currentTime; //current time of the simulation in seconds
 
+    bool nearbyStale;
+    bool collisionsStale;
+
+    TI_Voxel** cached_d_voxels;
+    int cached_num_d_voxels;
+    int cached_gridSize_voxels;
 };
 
 
