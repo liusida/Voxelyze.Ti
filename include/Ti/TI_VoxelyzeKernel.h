@@ -19,7 +19,7 @@ public:
     void doTimeStep(double dt=0.001f);
 
     void updateCollisions();
-    void regenerateCollisions(float threshRadiusSq);
+    void regenerateCollisions(double threshRadiusSq);
     void clearCollisions();
 
     void simpleGPUFunction();
@@ -43,6 +43,7 @@ public:
 
     bool nearbyStale;
     bool collisionsStale;
+    bool* d_collisionsStale;
 
     TI_Voxel** cached_d_voxels;
     int cached_num_d_voxels;

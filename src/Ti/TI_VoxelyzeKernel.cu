@@ -37,7 +37,9 @@ currentTime(vx->currentTime), nearbyStale(true), collisionsStale(true)
         //set values for GPU memory space
         TI_Voxel temp(voxel, this);
         gpuErrchk(cudaMemcpy(d_voxel, &temp, sizeof(TI_Voxel), cudaMemcpyHostToDevice));
-    } 
+    }
+
+    gpuErrchk(cudaMalloc((void**)&d_collisionsStale, sizeof(bool)));
 }
 
 TI_VoxelyzeKernel::~TI_VoxelyzeKernel()
@@ -112,9 +114,38 @@ void gpu_clear_collision(TI_Voxel** voxels, int num) {
     }
 }
 __global__
-void gpu_generate_collision(TI_Voxel** voxels, int num) {
+void gpu_generate_collision(TI_Voxel** voxels, int num, double threshRadiusSq) {
+    int gindex_x = threadIdx.x + blockIdx.x * blockDim.x; 
+    int gindex_y = threadIdx.y + blockIdx.y * blockDim.y;
+    if (gindex_x<gindex_y && gindex_y<num) {
+        TI_Voxel* pV1 = voxels[gindex_x];
+        TI_Voxel* pV2 = voxels[gindex_y];
+        if (!pV1->isInterior() && !pV2->isInterior()) { //don't care about interior voxels here.
+            if ((pV1->pos - pV2->pos).Length2() <= threshRadiusSq) { //discard anything outside the watch radius
+                if (!pV1->nearby.find(pV2)) { //discard if in the connected lattice array
+                    debugDev( printf("TODO:collision should be generated.") );
+                }
+            }
 
+        }
+    }
+    if (gindex_x==gindex_y && gindex_y<num) { //update last watch
+        TI_Voxel* pV = voxels[gindex_x];
+        pV->lastColWatchPosition = pV->pos;
+    }
 }
+
+__global__
+void gpu_check_moved_far_enough(TI_Voxel** voxels, int num, bool* pCollisionsStale, double recalcDist) {
+    int gindex = threadIdx.x + blockIdx.x * blockDim.x; 
+    if (gindex < num) {
+        TI_Voxel *pV = voxels[gindex];
+		if (pV->isSurface() && (pV->pos - pV->lastColWatchPosition).Length2() > recalcDist*recalcDist){
+            *pCollisionsStale = true; // far enough
+        }            
+    }
+}
+
 void TI_VoxelyzeKernel::clearCollisions() {
     for (unsigned i=0;i<d_collisions.size();i++) {
         cudaFree(d_collisions[i]);
@@ -126,28 +157,36 @@ void TI_VoxelyzeKernel::clearCollisions() {
     gpu_clear_collision<<<gridSize_voxels, blockSize>>>(thrust::raw_pointer_cast(d_voxels.data()), num_voxels);
     cudaDeviceSynchronize();
 }
-void TI_VoxelyzeKernel::regenerateCollisions(float threshRadiusSq) {
+void TI_VoxelyzeKernel::regenerateCollisions(double threshRadiusSq) {
     clearCollisions();
     //TODO: regenerate collisions
-    //gpu_generate_collision<<<>>>()
+    int num_voxels = d_voxels.size();
+    int blockSize = 32;
+    dim3 threadsPerBlock(blockSize, blockSize);
+    dim3 numBlocks( (num_voxels + blockSize - 1) / blockSize, (num_voxels + blockSize - 1) / blockSize );
 
-
-}
+    gpu_generate_collision<<<numBlocks, threadsPerBlock>>>(thrust::raw_pointer_cast(d_voxels.data()), num_voxels, threshRadiusSq);
+} //regenerateCollisions
 void TI_VoxelyzeKernel::updateCollisions() {
     int blockSize = 1024;
     int num_voxels = d_voxels.size();
     int gridSize_voxels = (num_voxels + blockSize - 1) / blockSize; 
-    float watchRadiusVx = 2*_vx->boundingRadius + _vx->watchDistance; //outer radius to track all voxels within
-	float watchRadiusMm = (float)(_vx->voxSize * watchRadiusVx); //outer radius to track all voxels within
-	float recalcDist = (float)(_vx->voxSize * _vx->watchDistance / 2 ); //if the voxel moves further than this radius, recalc! //1/2 the allowabl, accounting for 0.5x radius of the voxel iself
+    double watchRadiusVx = 2*_vx->boundingRadius + _vx->watchDistance; //outer radius to track all voxels within
+	double watchRadiusMm = (double)(_vx->voxSize * watchRadiusVx); //outer radius to track all voxels within
+	double recalcDist = (double)(_vx->voxSize * _vx->watchDistance / 2 ); //if the voxel moves further than this radius, recalc! //1/2 the allowabl, accounting for 0.5x radius of the voxel iself
 
-    //TODO: should decide when to update
 	if (nearbyStale){
         generate_voxels_Nearby<<<gridSize_voxels, blockSize>>>(thrust::raw_pointer_cast(d_voxels.data()), num_voxels, watchRadiusVx);
         cudaDeviceSynchronize();
 		nearbyStale = false;
 		collisionsStale = true;
     }
+
+    //check if any voxels have moved far enough to make collisions stale
+    gpuErrchk( cudaMemcpy(d_collisionsStale, &collisionsStale, sizeof(bool), cudaMemcpyHostToDevice) );
+    gpu_check_moved_far_enough<<<gridSize_voxels, blockSize>>>(thrust::raw_pointer_cast(d_voxels.data()), num_voxels, d_collisionsStale, recalcDist);
+    gpuErrchk( cudaMemcpy(&collisionsStale, d_collisionsStale, sizeof(bool), cudaMemcpyDeviceToHost) );
+    
     if (collisionsStale){
         regenerateCollisions(watchRadiusMm*watchRadiusMm);
         collisionsStale = false;

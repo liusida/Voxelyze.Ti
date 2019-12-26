@@ -54,6 +54,14 @@ public:
         main = NULL;
         num_main = 0;
     }
+    CUDA_DEVICE bool find(T value) {
+        for (unsigned i=0;i<size();i++) {
+            if (main[i]==value) {
+                return true;
+            }
+        }
+        return false;
+    }
 /* data */
     unsigned sizeof_chunk;
     T* main;
