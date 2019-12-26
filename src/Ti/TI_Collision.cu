@@ -1,6 +1,8 @@
 #include "TI_Collision.h"
 
-TI_Collision::TI_Collision(TI_Voxel* v1, TI_Voxel* v2)
+#define ENVELOPE_RADIUS 0.625f
+
+CUDA_DEVICE TI_Collision::TI_Collision(TI_Voxel* v1, TI_Voxel* v2)
 {
 	pV1 = v1;
     pV2 = v2;
@@ -9,7 +11,7 @@ TI_Collision::TI_Collision(TI_Voxel* v1, TI_Voxel* v2)
 	dampingC = 0.5f*(v1->material()->collisionDampingTranslateC() + v2->material()->collisionDampingTranslateC()); //average
 }
 
-TI_Collision& TI_Collision::operator=(const TI_Collision& col)
+CUDA_DEVICE TI_Collision& TI_Collision::operator=(const TI_Collision& col)
 {
 	pV1 = col.pV1;
 	pV2 = col.pV2;
@@ -18,7 +20,7 @@ TI_Collision& TI_Collision::operator=(const TI_Collision& col)
 	return *this;
 }
 
-TI_Vec3D<float> const TI_Collision::contactForce(TI_Voxel* pVoxel)
+CUDA_DEVICE TI_Vec3D<float> const TI_Collision::contactForce(TI_Voxel* pVoxel)
 {
 	if (pVoxel == pV1) return force;
 	else if (pVoxel == pV2) return -force;
@@ -26,12 +28,17 @@ TI_Vec3D<float> const TI_Collision::contactForce(TI_Voxel* pVoxel)
 }
 
 
-void TI_Collision::updateContactForce() 
+CUDA_DEVICE void TI_Collision::updateContactForce() 
 {
 	//just basic sphere envelope, repel with the stiffness of the material... (assumes UpdateConstants has been called)
 	TI_Vec3D<float> offset = (TI_Vec3D<float>)(pV2->position() - pV1->position());
-	float NomDist = (float)((pV1->baseSizeAverage() + pV2->baseSizeAverage())*envelopeRadius); //effective diameter of 1.5 voxels... (todo: remove length2!!
+	float NomDist = (float)((pV1->baseSizeAverage() + pV2->baseSizeAverage())*ENVELOPE_RADIUS); //effective diameter of 1.5 voxels... (todo: remove length2!!
 	float RelDist = NomDist -offset.Length(); //negative for overlap!
+
+	// debugDev( printf("pV1->mat->size().x %f", pV1->mat->size().x));
+	//mat->size()*(1+tempe*mat->alphaCTE)
+	// debugDevice("offset", offset.debug());
+	// debugDev(printf("NomDist %f, RelDist %f", NomDist, RelDist));
 
 	if (RelDist > 0){
 		TI_Vec3D<float> unit = offset.Normalized(); //unit vector from voxel 1 in the direction of voxel 2

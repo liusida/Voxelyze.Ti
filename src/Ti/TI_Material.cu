@@ -7,7 +7,7 @@ strainData(p->strainData), stressData(p->stressData),
 nu(p->nu),rho(p->rho),
 alphaCTE(p->alphaCTE), muStatic(p->muStatic), muKinetic(p->muKinetic),
 zetaInternal(p->zetaInternal), zetaGlobal(p->zetaGlobal), zetaCollision(p->zetaCollision),
-_eHat(p->_eHat) {
+extScale(p->extScale), _eHat(p->_eHat) {
 	
 }
 

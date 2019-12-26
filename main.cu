@@ -5,7 +5,7 @@
 
 int main(int argc, char** argv) {
 
-    int steps = 200;
+    int steps = 1000;
     if (argc>=2) {
         steps = strtol (argv[1],NULL,10);
         debugHost( printf("steps: %d", steps) );
@@ -13,7 +13,7 @@ int main(int argc, char** argv) {
 
     CVoxelyze Vx(0.005); //5mm voxels
 
-    //Vx.enableFloor();
+    Vx.enableFloor();
     Vx.enableCollisions();
 
     CVX_Material* pMaterial = Vx.addMaterial(1000000, 1000); //A material with stiffness E=1MPa and density 1000Kg/m^3
@@ -39,8 +39,7 @@ int main(int argc, char** argv) {
     TI_VoxelyzeKernel VxKernel(&Vx);
     VxKernel.readVoxelsPosFromDev();
     
-    for (int i=0;i<steps;i++) {
-        //debugHostx("step", printf("%d", i));
+    for (int j=0;j<steps;j++) {
 
         VxKernel.doTimeStep(0.00001);
         
@@ -49,17 +48,23 @@ int main(int argc, char** argv) {
             debugHost( printf("ERROR: Vx doTimeStep return false!") );
             break;
         }
-    }
-    VxKernel.readVoxelsPosFromDev();
-    for (unsigned i=0;i<VxKernel.read_voxels.size();i++) {
-        TI_Voxel* temp = VxKernel.read_voxels[i];
-        debugDev( printf("[%d] Dev Position: %f, %f, %f.", i, temp->pos.x, temp->pos.y, temp->pos.z) );
 
+        //if (j>=184 && j%1==0 && j<186) {
+        if (j%100==0) {
+            debugHostx("step", printf("%d", j));
+            VxKernel.readVoxelsPosFromDev();
+            for (unsigned i=0;i<VxKernel.read_voxels.size();i++) {
+                TI_Voxel* temp = VxKernel.read_voxels[i];
+                debugDev( printf("[%d] Dev Position: %f, %f, %f.", i, temp->pos.x, temp->pos.y, temp->pos.z) );
+        
+            }
+            for (unsigned i=0;i<Vx.voxelCount();i++) {
+                CVX_Voxel* temp = Vx.voxel(i);
+                debugHost( printf("[%d] Host Position: %f, %f, %f.", i, temp->pos.x, temp->pos.y, temp->pos.z) );
+            }
+        }
     }
-    for (unsigned i=0;i<Vx.voxelCount();i++) {
-        CVX_Voxel* temp = Vx.voxel(i);
-        debugHost( printf("[%d] Host Position: %f, %f, %f.", i, temp->pos.x, temp->pos.y, temp->pos.z) );
-    }
+
 
     std::cout<<std::endl;
 }

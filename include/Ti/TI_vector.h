@@ -46,7 +46,7 @@ public:
     CUDA_DEVICE T &operator[] (unsigned index) {
         return main[index];
     };
-    CUDA_DEVICE unsigned size() {
+    CUDA_CALLABLE_MEMBER unsigned size() {
         return num_main;
     };
     CUDA_DEVICE void clear() {

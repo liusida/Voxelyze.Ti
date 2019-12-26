@@ -30,14 +30,15 @@ public:
 
     thrust::device_vector<TI_Link *> d_links;
     thrust::device_vector<TI_Voxel *> d_voxels;
-    thrust::device_vector<TI_Collision *> d_collisions;
     std::vector<CVX_Link *> h_links;
     std::vector<CVX_Voxel *> h_voxels;
-    std::vector<CVX_Collision *> h_collisions;
 
     std::vector<TI_Link *> read_links;
     std::vector<TI_Voxel *> read_voxels;
 
+    TI_vector<TI_Collision *>* d_collisions;
+    TI_vector<TI_Collision *> h_collisions;
+    
     // h_links[i]  -- coresponding to -->  d_links[i]
 	float currentTime; //current time of the simulation in seconds
 

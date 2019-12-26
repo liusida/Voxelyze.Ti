@@ -5,14 +5,18 @@
 TI_Voxel::TI_Voxel(CVX_Voxel *p, TI_VoxelyzeKernel* k): 
 ix(p->ix), iy(p->iy), iz(p->iz),
 pos(p->pos), linMom(p->linMom), orient(p->orient), angMom(p->angMom),
-boolStates(p->boolStates), temp(p->temp), pStrain(p->pStrain), poissonsStrainInvalid(p->poissonsStrainInvalid),
+boolStates(p->boolStates), tempe(p->temp), pStrain(p->pStrain), poissonsStrainInvalid(p->poissonsStrainInvalid),
 previousDt(p->previousDt) {
 	_voxel = p;
     _kernel = k;
 
 	gpuErrchk(cudaMalloc((void **) &mat, sizeof(TI_MaterialVoxel)));
-	TI_MaterialVoxel temp(p->mat);
-	gpuErrchk(cudaMemcpy(mat, &temp, sizeof(TI_MaterialVoxel), cudaMemcpyHostToDevice));
+	TI_MaterialVoxel temp1(p->mat);
+	// debugHost( printf("temp1.nomSize: %f",temp1.nomSize) );
+	// debugHost( printf("temp1.extScale: %f, %f, %f",temp1.extScale.x, temp1.extScale.y, temp1.extScale.z) );
+	// debugHost( printf("p->mat.extScale: %f, %f, %f",p->mat->extScale.x, p->mat->extScale.y, p->mat->extScale.z) );
+	
+	gpuErrchk(cudaMemcpy(mat, &temp1, sizeof(TI_MaterialVoxel), cudaMemcpyHostToDevice));
 
 	for (unsigned i=0;i<6;i++) {
 		if (p->links[i]) {
@@ -111,7 +115,7 @@ CUDA_DEVICE bool TI_Voxel::isFailed() const
 
 CUDA_DEVICE void TI_Voxel::setTemperature(float temperature)
 {
-	temp = temperature;
+	tempe = temperature;
 	for (int i=0; i<6; i++){
 		if (links[i] != NULL) links[i]->updateRestLength();
 	}

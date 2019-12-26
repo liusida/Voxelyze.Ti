@@ -41,8 +41,8 @@ public:
 	CUDA_DEVICE bool isInterior() const {return (boolStates & SURFACE)?true:false;} //!< Returns true if the voxel is surrounded by other voxels on its 6 coordinate faces. Returns false if 1 or more faces are exposed.
 	CUDA_DEVICE bool isSurface() const {return !isInterior();} //!< Convenience function to enhance code readibility. The inverse of isInterior(). Returns true 1 or more faces are exposed. Returns false if the voxel is surrounded by other voxels on its 6 coordinate faces.
 
-	CUDA_DEVICE TI_Vec3D<double> baseSize() const {return mat->size()*(1+temp*mat->alphaCTE);} //!<Returns the nominal size of this voxel (LCS) accounting for any specified temperature and external actuation. Specifically, returns the zero-stress size of the voxel if all forces/moments were removed.
-	CUDA_DEVICE double baseSize(linkAxis axis) const {return mat->size()[axis]*(1+temp*mat->alphaCTE);} //!<Returns the nominal size of this voxel in the specified axis accounting for any specified temperature and external actuation. Specifically, returns the zero-stress dimension of the voxel if all forces/moments were removed.
+	CUDA_DEVICE TI_Vec3D<double> baseSize() const {return mat->size()*(1+tempe*mat->alphaCTE);} //!<Returns the nominal size of this voxel (LCS) accounting for any specified temperature and external actuation. Specifically, returns the zero-stress size of the voxel if all forces/moments were removed.
+	CUDA_DEVICE double baseSize(linkAxis axis) const {return mat->size()[axis]*(1+tempe*mat->alphaCTE);} //!<Returns the nominal size of this voxel in the specified axis accounting for any specified temperature and external actuation. Specifically, returns the zero-stress dimension of the voxel if all forces/moments were removed.
 	CUDA_DEVICE double baseSizeAverage() const {TI_Vec3D<double> bSize=baseSize(); return (bSize.x+bSize.y+bSize.z)/3.0f;} //!<Returns the average nominal size of the voxel in a zero-stress (no force) state. (X+Y+Z/3)
 
 	CUDA_DEVICE TI_Quat3D<double> orientation() const {return orient;} //!< Returns the orientation of this voxel in quaternion form (GCS). This orientation defines the relative orientation of the local coordinate system (LCS). The unit quaternion represents the original orientation of this voxel.
@@ -64,7 +64,7 @@ public:
 	CUDA_DEVICE bool isFailed() const; //!< Returns true if the stress in this voxel has ever exceeded the failure stress. Technically, this returns true if any of the connected links have failed since the stress state of the voxel is never expressly calculated.
 
 	//@ voxel level for heat diffusion experiments later
-	CUDA_DEVICE float temperature() {return temp;} //!< Returns the current temperature of this voxel in degrees Celsius.
+	CUDA_DEVICE float temperature() {return tempe;} //!< Returns the current temperature of this voxel in degrees Celsius.
 	CUDA_DEVICE void setTemperature(float temperature); //!< Specifies the temperature for this voxel. This adds (or subtracts) the correct amount of thermal energy to leave the voxel at ths specified temperature, but this temperature will not be maintaned without subsequent determines the amount of scaling from the temperature
 
 	CUDA_DEVICE TI_Vec3D<float> externalForce(); //!< Returns the current external force applied to this voxel in newtons. If the voxel is not fixed this will return any applied external forces. If fixed it will return the current reaction force necessary to enforce the zero-motion constraint.
@@ -129,7 +129,7 @@ public:
 
 	voxState boolStates;				//single int to store many boolean state values as bit flags according to 
 
-	float temp; //0 is no expansion
+	float tempe; //0 is no expansion
 
 	
 	TI_Vec3D<float> pStrain; //cached poissons strain

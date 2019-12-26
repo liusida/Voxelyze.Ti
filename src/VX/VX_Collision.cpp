@@ -43,8 +43,12 @@ void CVX_Collision::updateContactForce()
 {
 	//just basic sphere envelope, repel with the stiffness of the material... (assumes UpdateConstants has been called)
 	Vec3D<float> offset = (Vec3D<float>)(pV2->position() - pV1->position());
-	float NomDist = (float)((pV1->baseSizeAverage() + pV2->baseSizeAverage())*envelopeRadius); //effective diameter of 1.5 voxels... (todo: remove length2!!
+	float NomDist = (float)((pV1->baseSizeAverage() + pV2->baseSizeAverage())*envelopeRadius); //effective diameter of 1.5 voxels... (todo: remove length2!!) effective diameter: 1.25 voxels?
 	float RelDist = NomDist -offset.Length(); //negative for overlap!
+
+	// debugHost( printf("pV1->baseSize().x %f", pV1->baseSize().x));
+	// debugHostx("offset", offset.debug());
+	// debugHost(printf("NomDist %f, RelDist %f", NomDist, RelDist));
 
 	if (RelDist > 0){
 		Vec3D<float> unit = offset.Normalized(); //unit vector from voxel 1 in the direction of voxel 2
