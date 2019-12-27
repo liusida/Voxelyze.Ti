@@ -152,7 +152,8 @@ CUDA_DEVICE void TI_Link::updateForces()
 								b1*pos2.y - b2*(angle1v.z + angle2v.z),
 								b1*pos2.z + b2*(angle1v.y + angle2v.y)); //Use Curstress instead of -a1*Pos2.x to account for non-linear deformation 
 	forcePos = -forceNeg;
-
+	//debugDevice("forcePos", forcePos.debug());
+	
 	momentNeg = TI_Vec3D<double> (	a2*(angle2v.x - angle1v.x),
 								-b2*pos2.z - b3*(2*angle1v.y + angle2v.y),
 								b2*pos2.y - b3*(2*angle1v.z + angle2v.z));

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <algorithm>
 #include "cuda_occupancy.h"
 
 #include "TI_VoxelyzeKernel.h"
@@ -76,7 +77,7 @@ void TI_VoxelyzeKernel::simpleGPUFunction() {
 
 __global__
 void gpu_update_force(TI_Link** links, int num) {
-    int gindex = threadIdx.x + blockIdx.x * blockDim.x; 
+    int gindex = threadIdx.x + blockIdx.x * blockDim.x;
     if (gindex < num) {
         TI_Link* t = links[gindex];
         t->updateForces();
@@ -123,9 +124,11 @@ __global__
 void gpu_clear_collision(TI_vector<TI_Collision *>* d_collisions) {
     for (unsigned i=0;i<d_collisions->size();i++) {
         TI_Collision *pCol = d_collisions->get(i);
+        //debugDev( printf("delete TI_Collision %p", pCol) );
         delete pCol;
     }
     d_collisions->clear();
+    // debugDev( printf("d_collisions cleared: %d;\t", d_collisions->size()) );
 }
 __global__
 void gpu_generate_collision(TI_Voxel** voxels, int num, double threshRadiusSq, TI_vector<TI_Collision *>* d_collisions) {
@@ -141,6 +144,7 @@ void gpu_generate_collision(TI_Voxel** voxels, int num, double threshRadiusSq, T
                     d_collisions->push_back(pCol);
                     pV1->colWatch.push_back(pCol);
                     pV2->colWatch.push_back(pCol);
+                    //debugDev( printf("new TI_Collision %p", pCol) );
                     //debugDev( printf("d_collisions->size() %d",d_collisions->size()))
                 }
             }
@@ -155,6 +159,7 @@ __global__
 void gpu_update_contact_force(TI_vector<TI_Collision *>* d_collisions) {
     int gindex = threadIdx.x + blockIdx.x * blockDim.x; 
     if (gindex < d_collisions->size()) {
+        // debugDev( printf("d_collisions update force: %d;\t", d_collisions->size()) );
         TI_Collision* t = d_collisions->get(gindex);
         //debugDev( printf("%p hit %p ?", t->pV1, t->pV2) );
         //debugDevice("pV1", t->pV1->pos.debug());
@@ -167,39 +172,46 @@ void gpu_update_contact_force(TI_vector<TI_Collision *>* d_collisions) {
 void TI_VoxelyzeKernel::clearCollisions() {
     int blockSize = 1024;
     int num_voxels = d_voxels.size();
+    int blockSize_voxels = std::min(num_voxels, blockSize);
     int gridSize_voxels = (num_voxels + blockSize - 1) / blockSize; 
-    gpu_clear_collision_for_voxels<<<gridSize_voxels, blockSize>>>(thrust::raw_pointer_cast(d_voxels.data()), num_voxels);
+    gpu_clear_collision_for_voxels<<<gridSize_voxels, blockSize_voxels>>>(thrust::raw_pointer_cast(d_voxels.data()), num_voxels);
+    cudaDeviceSynchronize();
     gpu_clear_collision<<<1,1>>>(d_collisions);
     cudaDeviceSynchronize();
 }
+
 void TI_VoxelyzeKernel::regenerateCollisions(double threshRadiusSq) {
     clearCollisions();
     //TODO: regenerate collisions
     int num_voxels = d_voxels.size();
-    int blockSize = 32;
+    int blockSize = 32; //TODO: How to optimize this?
     dim3 threadsPerBlock(blockSize, blockSize);
     dim3 numBlocks( (num_voxels + blockSize - 1) / blockSize, (num_voxels + blockSize - 1) / blockSize );
 
     gpu_generate_collision<<<numBlocks, threadsPerBlock>>>(thrust::raw_pointer_cast(d_voxels.data()), num_voxels, threshRadiusSq, d_collisions);
+    cudaDeviceSynchronize();
 } //regenerateCollisions
+
 void TI_VoxelyzeKernel::updateCollisions() {
     int blockSize = 1024;
     int num_voxels = d_voxels.size();
+    int blockSize_voxels = std::min(num_voxels, blockSize);
     int gridSize_voxels = (num_voxels + blockSize - 1) / blockSize; 
     double watchRadiusVx = 2*_vx->boundingRadius + _vx->watchDistance; //outer radius to track all voxels within
 	double watchRadiusMm = (double)(_vx->voxSize * watchRadiusVx); //outer radius to track all voxels within
 	double recalcDist = (double)(_vx->voxSize * _vx->watchDistance / 2 ); //if the voxel moves further than this radius, recalc! //1/2 the allowabl, accounting for 0.5x radius of the voxel iself
 
 	if (nearbyStale){
-        generate_voxels_Nearby<<<gridSize_voxels, blockSize>>>(thrust::raw_pointer_cast(d_voxels.data()), num_voxels, watchRadiusVx);
+        generate_voxels_Nearby<<<gridSize_voxels, blockSize_voxels>>>(thrust::raw_pointer_cast(d_voxels.data()), num_voxels, watchRadiusVx);
         cudaDeviceSynchronize();
 		nearbyStale = false;
 		collisionsStale = true;
     }
-
+    
     //check if any voxels have moved far enough to make collisions stale
     gpuErrchk( cudaMemcpy(d_collisionsStale, &collisionsStale, sizeof(bool), cudaMemcpyHostToDevice) );
-    gpu_check_moved_far_enough<<<gridSize_voxels, blockSize>>>(thrust::raw_pointer_cast(d_voxels.data()), num_voxels, d_collisionsStale, recalcDist);
+    gpu_check_moved_far_enough<<<gridSize_voxels, blockSize_voxels>>>(thrust::raw_pointer_cast(d_voxels.data()), num_voxels, d_collisionsStale, recalcDist);
+    cudaDeviceSynchronize();
     gpuErrchk( cudaMemcpy(&collisionsStale, d_collisionsStale, sizeof(bool), cudaMemcpyDeviceToHost) );
     
     if (collisionsStale){
@@ -210,24 +222,28 @@ void TI_VoxelyzeKernel::updateCollisions() {
 
     //check if any voxels have moved far enough to make collisions stale
     int num_collisions = h_collisions.size();
-    int gridSize_collisions = (num_collisions + blockSize - 1) / blockSize; 
-    gpu_update_contact_force<<<gridSize_collisions, blockSize>>>(d_collisions);
-
+    if (num_collisions) {
+        int gridSize_collisions = (num_collisions + blockSize - 1) / blockSize; 
+        int blockSize_collisions = std::min(num_collisions, blockSize);
+        gpu_update_contact_force<<<gridSize_collisions, blockSize_collisions>>>(d_collisions);
+        cudaDeviceSynchronize();
+    }
 }
 
 void TI_VoxelyzeKernel::doTimeStep(double dt) {
     int blockSize = 1024;
     int num_links = d_links.size();
+    int blockSize_links = min(num_links, blockSize);
     int num_voxels = d_voxels.size();
+    int blockSize_voxels = min(num_voxels, blockSize);
     int gridSize_links = (num_links + blockSize - 1) / blockSize; 
-    int gridSize_voxels = (num_voxels + blockSize - 1) / blockSize; 
-    gpu_update_force<<<gridSize_links, blockSize>>>(thrust::raw_pointer_cast(d_links.data()), num_links);
+    int gridSize_voxels = (num_voxels + blockSize - 1) / blockSize;
+    gpu_update_force<<<gridSize_links, blockSize_links>>>(thrust::raw_pointer_cast(d_links.data()), num_links);
     cudaDeviceSynchronize();
     
     updateCollisions();
-    cudaDeviceSynchronize();
 
-    gpu_update_voxel<<<gridSize_voxels, blockSize>>>(thrust::raw_pointer_cast(d_voxels.data()), num_voxels, dt);
+    gpu_update_voxel<<<gridSize_voxels, blockSize_voxels>>>(thrust::raw_pointer_cast(d_voxels.data()), num_voxels, dt);
     cudaDeviceSynchronize();
 
     currentTime += dt;

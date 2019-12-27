@@ -25,6 +25,7 @@ set_target_properties(Voxelyze.Ti PROPERTIES CUDA_SEPARABLE_COMPILATION ON) # ne
 target_include_directories(Voxelyze.Ti PUBLIC ${INCLUDE_DIR} ${VX_INCLUDE_DIR} ${TI_INCLUDE_DIR})
 
 #TODO: make sure we want to use compute_60 to compile.
+# How to use newer architecture?
 target_compile_options(Voxelyze.Ti PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:-arch=compute_60 -code=compute_60>)
 
 # set(CPACK_PROJECT_NAME ${PROJECT_NAME})

@@ -399,12 +399,6 @@ CUDA_DEVICE void TI_Voxel::updateSurface()
 
 
 CUDA_DEVICE void TI_Voxel::enableCollisions(bool enabled, float watchRadius) {
-	if (enabled){
-		//if (!lastColWatchPosition) lastColWatchPosition = new TI_Vec3D<float>;
-		//if (!colWatch) colWatch = new TI_vector<TI_Collision*>;
-		//if (!nearby) nearby = new TI_vector<TI_Voxel*>;
-	}
-
 	enabled ? boolStates |= COLLISIONS_ENABLED : boolStates &= ~COLLISIONS_ENABLED;
 }
 
@@ -412,7 +406,7 @@ CUDA_DEVICE void TI_Voxel::enableCollisions(bool enabled, float watchRadius) {
 CUDA_DEVICE void TI_Voxel::generateNearby(int linkDepth, bool surfaceOnly){
 	TI_vector<TI_Voxel*> allNearby;
 	allNearby.push_back(this);
-	
+
 	int iCurrent = 0;
 	for (int k=0; k<linkDepth; k++){
 		int iPassEnd = allNearby.size();
@@ -441,10 +435,6 @@ CUDA_DEVICE void TI_Voxel::generateNearby(int linkDepth, bool surfaceOnly){
 	}
 
 	nearby.clear();
-	// for (TI_vector<TI_Voxel*>::iterator it = allNearby.begin(); it != allNearby.end(); it++){
-	// 	TI_Voxel* pV = (*it);
-	// 	if (pV->isSurface() && pV != this) nearby->push_back(pV);		
-	// }
 	for (unsigned i=0;i<allNearby.size();i++) {
 		TI_Voxel* pV = allNearby[i];
 		if (pV->isSurface() && pV != this) nearby.push_back(pV);		

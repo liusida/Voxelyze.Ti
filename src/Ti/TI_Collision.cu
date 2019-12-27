@@ -35,11 +35,6 @@ CUDA_DEVICE void TI_Collision::updateContactForce()
 	float NomDist = (float)((pV1->baseSizeAverage() + pV2->baseSizeAverage())*ENVELOPE_RADIUS); //effective diameter of 1.5 voxels... (todo: remove length2!!
 	float RelDist = NomDist -offset.Length(); //negative for overlap!
 
-	// debugDev( printf("pV1->mat->size().x %f", pV1->mat->size().x));
-	//mat->size()*(1+tempe*mat->alphaCTE)
-	// debugDevice("offset", offset.debug());
-	// debugDev(printf("NomDist %f, RelDist %f", NomDist, RelDist));
-
 	if (RelDist > 0){
 		TI_Vec3D<float> unit = offset.Normalized(); //unit vector from voxel 1 in the direction of voxel 2
 		float relativeVelocity = pV1->velocity().Dot((TI_Vec3D<double>)unit) - pV2->velocity().Dot((TI_Vec3D<double>)unit); //negative is moving towards each other
