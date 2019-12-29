@@ -22,7 +22,7 @@ _stress(p->_stress)
     pVPos = getDevPtrFromHostPtr(p->pVPos);
 
 	gpuErrchk(cudaMalloc((void **) &mat, sizeof(TI_MaterialLink)));
-	TI_MaterialLink temp(p->mat);
+	TI_MaterialLink temp(p->mat); //TODO: don't need create a new material link every time! create a pointer!
 	gpuErrchk(cudaMemcpy(mat, &temp, sizeof(TI_MaterialLink), cudaMemcpyHostToDevice));
 }
 
@@ -52,10 +52,8 @@ CUDA_DEVICE TI_Quat3D<double> TI_Link::orientLink(/*double restLength*/) //updat
 
 	angle1 = toAxisX(pVNeg->orientation());
 	angle2 = toAxisX(pVPos->orientation());
-	// debugDev( printf("pVPos: %f, %f, %f\t", pVPos->pos.x, pVPos->pos.y, pVPos->pos.z) );
+
 	auto temp = pVPos->orientation();
-	// debugDev( printf("pVPos->orientation(): %f, %f, %f, %f\t", temp.w, temp.x, temp.y, temp.z) );
-	// debugDev( printf("angle2: %f, %f, %f, %f\t", angle2.w, angle2.x, angle2.y, angle2.z) );
 
 	TI_Quat3D<double> totalRot = angle1.Conjugate(); //keep track of the total rotation of this bond (after toAxisX())
 	pos2 = totalRot.RotateVec3D(pos2);
@@ -125,9 +123,8 @@ CUDA_DEVICE void TI_Link::updateTransverseInfo()
 CUDA_DEVICE void TI_Link::updateForces()
 {
 	TI_Vec3D<double> oldPos2 = pos2, oldAngle1v = angle1v, oldAngle2v = angle2v; //remember the positions/angles from last timestep to calculate velocity
-	
+
 	orientLink(/*restLength*/); //sets pos2, angle1, angle2
-	
 
 	TI_Vec3D<double> dPos2 = 0.5*(pos2-oldPos2); //deltas for local damping. velocity at center is half the total velocity
 	TI_Vec3D<double> dAngle1 = 0.5*(angle1v-oldAngle1v);
@@ -152,8 +149,7 @@ CUDA_DEVICE void TI_Link::updateForces()
 								b1*pos2.y - b2*(angle1v.z + angle2v.z),
 								b1*pos2.z + b2*(angle1v.y + angle2v.y)); //Use Curstress instead of -a1*Pos2.x to account for non-linear deformation 
 	forcePos = -forceNeg;
-	//debugDevice("forcePos", forcePos.debug());
-	
+
 	momentNeg = TI_Vec3D<double> (	a2*(angle2v.x - angle1v.x),
 								-b2*pos2.z - b3*(2*angle1v.y + angle2v.y),
 								b2*pos2.y - b3*(2*angle1v.z + angle2v.z));

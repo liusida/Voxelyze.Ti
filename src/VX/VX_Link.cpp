@@ -75,10 +75,8 @@ Quat3D<double> CVX_Link::orientLink(/*double restLength*/) //updates pos2, angle
 
 	angle1 = toAxisX(pVNeg->orientation());
 	angle2 = toAxisX(pVPos->orientation());
-	// debugHost( printf("pVPos: %f, %f, %f", pVPos->pos.x, pVPos->pos.y, pVPos->pos.z) );
+
 	auto temp = pVPos->orientation();
-	// debugHost( printf("pVPos->orientation(): %f, %f, %f, %f\t", temp.w, temp.x, temp.y, temp.z) );
-	// debugHost( printf("angle2: %f, %f, %f, %f\t", angle2.w, angle2.x, angle2.y, angle2.z) );
 
 	Quat3D<double> totalRot = angle1.Conjugate(); //keep track of the total rotation of this bond (after toAxisX())
 	pos2 = totalRot.RotateVec3D(pos2);
@@ -106,7 +104,6 @@ Quat3D<double> CVX_Link::orientLink(/*double restLength*/) //updates pos2, angle
 		angle2 = angle1 * angle2; //rotate angle2
 		pos2 = Vec3D<>(pos2.Length() - currentRestLength, 0, 0); 
 	}
-
 	angle1v = angle1.ToRotationVector();
 	angle2v = angle2.ToRotationVector();
 
@@ -167,8 +164,7 @@ void CVX_Link::updateForces()
 								b1*pos2.y - b2*(angle1v.z + angle2v.z),
 								b1*pos2.z + b2*(angle1v.y + angle2v.y)); //Use Curstress instead of -a1*Pos2.x to account for non-linear deformation 
 	forcePos = -forceNeg;
-	//debugHostx("forcePos", forcePos.debug());
-
+	
 	momentNeg = Vec3D<double> (	a2*(angle2v.x - angle1v.x),
 								-b2*pos2.z - b3*(2*angle1v.y + angle2v.y),
 								b2*pos2.y - b3*(2*angle1v.z + angle2v.z));
@@ -203,7 +199,7 @@ void CVX_Link::updateForces()
 	}
 	forcePos = angle2.RotateVec3DInv(forcePos);
 	momentPos = angle2.RotateVec3DInv(momentPos);
-
+	
 	toAxisOriginal(&forceNeg);
 	toAxisOriginal(&forcePos);
 	toAxisOriginal(&momentNeg);
@@ -212,8 +208,6 @@ void CVX_Link::updateForces()
 	assert(!(forceNeg.x != forceNeg.x) || !(forceNeg.y != forceNeg.y) || !(forceNeg.z != forceNeg.z)); //assert non QNAN
 	assert(!(forcePos.x != forcePos.x) || !(forcePos.y != forcePos.y) || !(forcePos.z != forcePos.z)); //assert non QNAN
 	
-
-
 }
 
 

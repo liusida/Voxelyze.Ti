@@ -262,7 +262,6 @@ bool CVoxelyze::doTimeStep(float dt)
 #endif
 	for (int i = 0; i<linkCount; i++){
 		linksList[i]->updateForces();
-		//debugHostx("t->axialStrain()", printf("%f", linksList[i]->axialStrain()));
 		if (linksList[i]->axialStrain() > 100) Diverged = true; //catch divergent condition! (if any thread sets true we will fail, so don't need mutex...
 	}
 

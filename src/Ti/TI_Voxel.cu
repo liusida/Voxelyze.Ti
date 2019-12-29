@@ -12,9 +12,6 @@ previousDt(p->previousDt) {
 
 	gpuErrchk(cudaMalloc((void **) &mat, sizeof(TI_MaterialVoxel)));
 	TI_MaterialVoxel temp1(p->mat);
-	// debugHost( printf("temp1.nomSize: %f",temp1.nomSize) );
-	// debugHost( printf("temp1.extScale: %f, %f, %f",temp1.extScale.x, temp1.extScale.y, temp1.extScale.z) );
-	// debugHost( printf("p->mat.extScale: %f, %f, %f",p->mat->extScale.x, p->mat->extScale.y, p->mat->extScale.z) );
 	
 	gpuErrchk(cudaMemcpy(mat, &temp1, sizeof(TI_MaterialVoxel), cudaMemcpyHostToDevice));
 
@@ -184,11 +181,12 @@ CUDA_DEVICE void TI_Voxel::timeStep(float dt)
 	TI_Vec3D<double> curForce = force();
 	
 	TI_Vec3D<double> fricForce = curForce;
-	
-	if (isFloorEnabled()) floorForce(dt, &curForce); //floor force needs dt to calculate threshold to "stop" a slow voxel into static friction.
-	
+
+	if (isFloorEnabled()) {
+		floorForce(dt, &curForce); //floor force needs dt to calculate threshold to "stop" a slow voxel into static friction.
+	}
 	fricForce = curForce - fricForce;
-	
+
 	assert(!(curForce.x != curForce.x) || !(curForce.y != curForce.y) || !(curForce.z != curForce.z)); //assert non QNAN
 	linMom += curForce*dt;
 	
@@ -199,7 +197,6 @@ CUDA_DEVICE void TI_Voxel::timeStep(float dt)
 		
 		double work = fricForce.x*translate.x + fricForce.y*translate.y; //F dot disp
 		double hKe = 0.5*mat->_massInverse*(linMom.x*linMom.x + linMom.y*linMom.y); //horizontal kinetic energy
-
 		if(hKe + work <= 0) setFloorStaticFriction(true); //this checks for a change of direction according to the work-energy principle
 
 		if (isFloorStaticFriction()){ //if we're in a state of static friction, zero out all horizontal motion
@@ -240,7 +237,6 @@ CUDA_DEVICE void TI_Voxel::timeStep(float dt)
 	
 	poissonsStrainInvalid = true;
 }
-
 CUDA_DEVICE TI_Vec3D<double> TI_Voxel::force()
 {
 	
@@ -253,20 +249,16 @@ CUDA_DEVICE TI_Vec3D<double> TI_Voxel::force()
 	totalForce = orient.RotateVec3D(totalForce); //from local to global coordinates
 	assert(!(totalForce.x != totalForce.x) || !(totalForce.y != totalForce.y) || !(totalForce.z != totalForce.z)); //assert non QNAN
 	
-
 	//other forces
 	if (externalExists()) totalForce += external()->force(); //external forces
 	totalForce -= velocity()*mat->globalDampingTranslateC(); //global damping f-cv
 	totalForce.z += mat->gravityForce(); //gravity, according to f=mg
 	
-
 	if (isCollisionsEnabled()){
 		for (int i=0;i<colWatch.size();i++){
 			totalForce -= colWatch[i]->contactForce(this);
 		}
 	}
-	
-
 	return totalForce;
 }
 
@@ -291,13 +283,14 @@ CUDA_DEVICE TI_Vec3D<double> TI_Voxel::moment()
 CUDA_DEVICE void TI_Voxel::floorForce(float dt, TI_Vec3D<double>* pTotalForce)
 {
 	float CurPenetration = floorPenetration(); //for now use the average.
-
 	if (CurPenetration>=0){ 
 		TI_Vec3D<double> vel = velocity();
 		TI_Vec3D<double> horizontalVel(vel.x, vel.y, 0);
 		
 		float normalForce = mat->penetrationStiffness()*CurPenetration;
+
 		pTotalForce->z += normalForce - mat->collisionDampingTranslateC()*vel.z; //in the z direction: k*x-C*v - spring and damping
+
 
 		if (isFloorStaticFriction()){ //If this voxel is currently in static friction mode (no lateral motion) 
 			assert(horizontalVel.Length2() == 0);

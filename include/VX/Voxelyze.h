@@ -9,6 +9,8 @@ Voxelyze is distributed in the hope that it will be useful, but WITHOUT ANY WARR
 See <http://www.opensource.org/licenses/lgpl-3.0.html> for license details.
 *******************************************************************************/
 
+/* Sida: Known issue: xIndex is int, and the maximum of int is 32768, Maybe we should change all int and unsigned int to unsiged long. */
+
 #ifndef VOXELYZE_H
 #define VOXELYZE_H
 

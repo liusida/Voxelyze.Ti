@@ -130,6 +130,7 @@ void gpu_clear_collision(TI_vector<TI_Collision *>* d_collisions) {
     d_collisions->clear();
     // debugDev( printf("d_collisions cleared: %d;\t", d_collisions->size()) );
 }
+//TODO: TI_vector is not thread-safe. so d_collisions should be change to "Mapper Reducer".
 __global__
 void gpu_generate_collision(TI_Voxel** voxels, int num, double threshRadiusSq, TI_vector<TI_Collision *>* d_collisions) {
     int gindex_x = threadIdx.x + blockIdx.x * blockDim.x; 
@@ -241,7 +242,7 @@ void TI_VoxelyzeKernel::doTimeStep(double dt) {
     gpu_update_force<<<gridSize_links, blockSize_links>>>(thrust::raw_pointer_cast(d_links.data()), num_links);
     cudaDeviceSynchronize();
     
-    updateCollisions();
+    //updateCollisions();
 
     gpu_update_voxel<<<gridSize_voxels, blockSize_voxels>>>(thrust::raw_pointer_cast(d_voxels.data()), num_voxels, dt);
     cudaDeviceSynchronize();

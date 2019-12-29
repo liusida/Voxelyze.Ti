@@ -73,7 +73,7 @@ public:
 	CUDA_DEVICE void haltMotion(){linMom = angMom = TI_Vec3D<>(0,0,0);} //!< Halts all momentum of this block. Unless fixed the voxel will continue to move in subsequent timesteps.
 
 	CUDA_DEVICE void enableFloor(bool enabled) {enabled ? boolStates |= FLOOR_ENABLED : boolStates &= ~FLOOR_ENABLED;} //!< Enables this voxel interacting with the floor at Z=0. @param[in] enabled Enable interaction
-	CUDA_DEVICE bool isFloorEnabled() const {return boolStates & FLOOR_ENABLED ? true : false;} //!< Returns true of this voxel will interact with the floor at Z=0.
+	CUDA_CALLABLE_MEMBER bool isFloorEnabled() const {return boolStates & FLOOR_ENABLED ? true : false;} //!< Returns true of this voxel will interact with the floor at Z=0.
 	CUDA_DEVICE bool isFloorStaticFriction() const {return boolStates & FLOOR_STATIC_FRICTION ? true : false;} //!< Returns true if this voxel is in contact with the floor and stationary in the horizontal directions. This corresponds to that voxel being in the mode of static friction (as opposed to kinetic) with the floor.
 	CUDA_DEVICE float floorPenetration() const {return (float)(baseSizeAverage()/2 - mat->nominalSize()/2 - pos.z);} //!< Returns the interference (in meters) between the collision envelope of this voxel and the floor at Z=0. Positive numbers correspond to interference. If the voxel is not touching the floor 0 is returned.
 

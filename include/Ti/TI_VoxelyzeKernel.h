@@ -36,6 +36,7 @@ public:
     std::vector<TI_Link *> read_links;
     std::vector<TI_Voxel *> read_voxels;
 
+    //TODO: TI_vector is not thread-safe. so d_collisions should be change to "Mapper Reducer".
     TI_vector<TI_Collision *>* d_collisions;
     TI_vector<TI_Collision *> h_collisions;
     

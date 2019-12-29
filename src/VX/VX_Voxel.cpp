@@ -176,7 +176,6 @@ void CVX_Voxel::timeStep(float dt)
 	Vec3D<double> fricForce = curForce;
 
 	if (isFloorEnabled()) floorForce(dt, &curForce); //floor force needs dt to calculate threshold to "stop" a slow voxel into static friction.
-
 	fricForce = curForce - fricForce;
 
 	assert(!(curForce.x != curForce.x) || !(curForce.y != curForce.y) || !(curForce.z != curForce.z)); //assert non QNAN
@@ -188,7 +187,6 @@ void CVX_Voxel::timeStep(float dt)
 	if (isFloorEnabled() && floorPenetration() >= 0){ //we must catch a slowing voxel here since it all boils down to needing access to the dt of this timestep.
 		double work = fricForce.x*translate.x + fricForce.y*translate.y; //F dot disp
 		double hKe = 0.5*mat->_massInverse*(linMom.x*linMom.x + linMom.y*linMom.y); //horizontal kinetic energy
-
 		if(hKe + work <= 0) setFloorStaticFriction(true); //this checks for a change of direction according to the work-energy principle
 
 		if (isFloorStaticFriction()){ //if we're in a state of static friction, zero out all horizontal motion
@@ -200,7 +198,6 @@ void CVX_Voxel::timeStep(float dt)
 
 
 	pos += translate;
-
 	//Rotation
 	Vec3D<> curMoment = moment();
 	angMom += curMoment*dt;
@@ -240,18 +237,15 @@ Vec3D<double> CVX_Voxel::force()
 	}
 	totalForce = orient.RotateVec3D(totalForce); //from local to global coordinates
 	assert(!(totalForce.x != totalForce.x) || !(totalForce.y != totalForce.y) || !(totalForce.z != totalForce.z)); //assert non QNAN
-
 	//other forces
 	if (externalExists()) totalForce += external()->force(); //external forces
 	totalForce -= velocity()*mat->globalDampingTranslateC(); //global damping f-cv
 	totalForce.z += mat->gravityForce(); //gravity, according to f=mg
-
 	if (isCollisionsEnabled()){
 		for (std::vector<CVX_Collision*>::iterator it=colWatch->begin(); it!=colWatch->end(); it++){
 			totalForce -= (*it)->contactForce(this);
 		}
 	}
-
 	return totalForce;
 }
 
@@ -283,6 +277,7 @@ void CVX_Voxel::floorForce(float dt, Vec3D<double>* pTotalForce)
 		Vec3D<double> horizontalVel(vel.x, vel.y, 0);
 		
 		float normalForce = mat->penetrationStiffness()*CurPenetration;
+
 		pTotalForce->z += normalForce - mat->collisionDampingTranslateC()*vel.z; //in the z direction: k*x-C*v - spring and damping
 
 		if (isFloorStaticFriction()){ //If this voxel is currently in static friction mode (no lateral motion) 
