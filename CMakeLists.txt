@@ -1,33 +1,90 @@
-cmake_minimum_required(VERSION 3.1.0)
-#set(CMAKE_CUDA_COMPILER "/usr/local/cuda/bin/nvcc")
-#set(CUDA_TOOLKIT_ROOT_DIR "/usr/local/cuda")
+cmake_minimum_required(VERSION 3.10)
+set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 
-project(Voxelyze.Ti VERSION 0.1.0 LANGUAGES CXX CUDA)
-set(CMAKE_CXX_STANDARD 14) # set C++ standard to C++14
+# Options. Turn on with 'cmake -Dmyvarname=ON'.
+option(test "Build all tests." ON) # Makes boolean 'test' available.
 
-set(ROOT_DIR ${CMAKE_CURRENT_LIST_DIR})
-#set(ROOT_DIR "/V")
+# Make PROJECT_SOURCE_DIR, PROJECT_BINARY_DIR, and PROJECT_NAME available.
+set(PROJECT_NAME Voxelyze.Ti)
+project(${PROJECT_NAME} CXX C CUDA)
 
-set(INCLUDE_DIR ${ROOT_DIR}/include)
+set(CMAKE_CXX_FLAGS "-g -Wall")
 
-set(VX_INCLUDE_DIR ${ROOT_DIR}/include/VX)
-set(VX_SRC_DIR ${ROOT_DIR}/src/VX/*.c*)
-file(GLOB VX_SRC_FILES ${VX_SRC_DIR})
+# force static runtime libraries for msvc builds
+if(MSVC)
+  set(variables 
+    CMAKE_CXX_FLAGS_DEBUG
+    CMAKE_CXX_FLAGS_RELEASE
+	CMAKE_CXX_FLAGS_RELWITHDEBINFO
+	CMAKE_CXX_FLAGS_MINSIZEREL
+  )
+  foreach(variable ${variables})
+	if(${variable} MATCHES "/MD")
+	  string(REGEX REPLACE "/MD" "/MT" ${variable} "${${variable}}")
+	endif()
+  endforeach()
+endif()
 
-set(TI_INCLUDE_DIR ${ROOT_DIR}/include/Ti)
-set(TI_SRC_DIR ${ROOT_DIR}/src/Ti/*.c*)
-file(GLOB TI_SRC_FILES ${TI_SRC_DIR})
-# include(CTest)
-# enable_testing()
+# If you want your own include/ directory, set this, and then you can do
+# include_directories(${COMMON_INCLUDES}) in other CMakeLists.txt files.
+# set(COMMON_INCLUDES ${PROJECT_SOURCE_DIR}/include)
 
-add_executable(Voxelyze.Ti main.cu ${VX_SRC_FILES} ${TI_SRC_FILES})
-set_target_properties(Voxelyze.Ti PROPERTIES CUDA_SEPARABLE_COMPILATION ON) # needed for library compilation
-target_include_directories(Voxelyze.Ti PUBLIC ${INCLUDE_DIR} ${VX_INCLUDE_DIR} ${TI_INCLUDE_DIR})
+################################
+# Normal Libraries & Executables
+################################
+# add_subdirectory(src/project1)
+# include_directories(${project1_SOURCE_DIR}/include ${project1_SOURCE_DIR})
 
-#TODO: make sure we want to use compute_60 to compile.
-# How to use newer architecture?
-target_compile_options(Voxelyze.Ti PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:-arch=compute_60 -code=compute_60>)
+add_subdirectory(src/glGraphics)
+include_directories(${glGraphics_SOURCE_DIR}/include ${glGraphics_SOURCE_DIR})
 
-# set(CPACK_PROJECT_NAME ${PROJECT_NAME})
-# set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
-# include(CPack)
+add_subdirectory(src/Voxelyze-3.0)
+include_directories(${Voxelyze_SOURCE_DIR}/include ${Voxelyze_SOURCE_DIR}/include/Ti ${Voxelyze_SOURCE_DIR}/include/VX)
+
+add_executable(${PROJECT_NAME} main.cu)
+# Key idea: SEPARATE OUT your main() function into its own file so it can be its
+# own executable. Separating out main() means you can add this library to be
+# used elsewhere.
+
+target_link_libraries(${PROJECT_NAME} glGraphics_lib Voxelyze_lib)
+
+################################
+# Testing
+################################
+if (test)
+  if (APPLE)
+    add_definitions(-DGTEST_USE_OWN_TR1_TUPLE)
+    add_definitions(-D__GLIBCXX__)
+  endif (APPLE)
+
+  # This adds another subdirectory, which has 'project(gtest)'.
+  add_subdirectory(src/gtest-1.6.0)
+
+  enable_testing()
+
+  # Include the gtest library. gtest_SOURCE_DIR is available due to
+  # 'project(gtest)' above.
+  include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
+
+  ##############
+  # Unit Tests
+  ##############
+  set(TEST_DIR test)
+  file(GLOB TEST_FILES ${TEST_DIR}/*.c*)
+  add_executable(runUnitTests ${TEST_FILES})
+
+  # Standard linking to gtest stuff.
+  target_link_libraries(runUnitTests gtest gtest_main)
+
+  # Extra linking for the project.
+  target_link_libraries(runUnitTests glGraphics_lib Voxelyze_lib)
+
+  # This is so you can do 'make test' to see all your tests run, instead of
+  # manually running the executable runUnitTests to see those specific tests.
+  add_test(NAME that-test-I-made COMMAND runUnitTests)
+
+  # You can also omit NAME and COMMAND. The second argument could be some other
+  # test executable.
+  add_test(that-other-test-I-made runUnitTests)
+endif()
+set(CMAKE_VERBOSE_MAKEFILE OFF)
