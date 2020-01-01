@@ -109,7 +109,7 @@ public:
 	CUDA_DEVICE void updateSurface();
 	CUDA_DEVICE void enableCollisions(bool enabled, float watchRadius = 0.0f); //watchRadius in voxel units
 	CUDA_DEVICE bool isCollisionsEnabled() const {return boolStates & COLLISIONS_ENABLED ? true : false;}
-	CUDA_DEVICE void generateNearby(int linkDepth, bool surfaceOnly = true);
+	CUDA_DEVICE void generateNearby(int linkDepth, int gindex, bool surfaceOnly = true);
 
 /* data */
     CVX_Voxel* _voxel;

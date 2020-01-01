@@ -4,13 +4,21 @@
 
 #include "TI_VoxelyzeKernel.h"
 #include "TI_Utils.h"
+
 TI_VoxelyzeKernel::TI_VoxelyzeKernel( CVoxelyze* vx ):
 currentTime(vx->currentTime), nearbyStale(true), collisionsStale(true)
 {
     _vx = vx;
     
-    //need to allocate memory first, then set the value, because there are links in voxels and voxels in links.
-
+    for (auto mat:vx->linkMats) {
+        TI_MaterialLink * d_mat;
+        gpuErrchk(cudaMalloc((void **) &d_mat, sizeof(TI_MaterialLink)));
+        TI_MaterialLink temp = TI_MaterialLink(mat);
+        gpuErrchk(cudaMemcpy(d_mat, &temp, sizeof(TI_MaterialLink), cudaMemcpyHostToDevice));
+        d_linkMats.push_back(d_mat);
+        h_linkMats.push_back(mat);
+    }
+    //for voxel: need to allocate memory first, then set the value, because there are links in voxels and voxels in links.
     for (auto voxel: vx->voxelsList) {
         //alloc a GPU memory space
         TI_Voxel * d_voxel;
@@ -39,6 +47,7 @@ currentTime(vx->currentTime), nearbyStale(true), collisionsStale(true)
         TI_Voxel temp(voxel, this);
         gpuErrchk(cudaMemcpy(d_voxel, &temp, sizeof(TI_Voxel), cudaMemcpyHostToDevice));
     }
+
 
     gpuErrchk(cudaMalloc((void**)&d_collisionsStale, sizeof(bool)));
 
@@ -81,7 +90,6 @@ void gpu_update_force(TI_Link** links, int num) {
     if (gindex < num) {
         TI_Link* t = links[gindex];
         t->updateForces();
-        //ebugDevice("t->axialStrain()", printf("%f", t->axialStrain()));
         if (t->axialStrain() > 100) { printf("ERROR: Diverged."); }
     }
 }
@@ -98,7 +106,7 @@ void generate_voxels_Nearby(TI_Voxel** voxels, int num, float watchRadiusVx) {
     int gindex = threadIdx.x + blockIdx.x * blockDim.x; 
     if (gindex < num) {
         TI_Voxel* t = voxels[gindex];
-        t->generateNearby(watchRadiusVx*2, false);
+        t->generateNearby(watchRadiusVx*2, gindex, false);
     }
 }
 
@@ -183,7 +191,7 @@ void TI_VoxelyzeKernel::clearCollisions() {
 
 void TI_VoxelyzeKernel::regenerateCollisions(double threshRadiusSq) {
     clearCollisions();
-    //TODO: regenerate collisions
+    
     int num_voxels = d_voxels.size();
     int blockSize = 32; //TODO: How to optimize this?
     dim3 threadsPerBlock(blockSize, blockSize);
@@ -242,7 +250,7 @@ void TI_VoxelyzeKernel::doTimeStep(double dt) {
     gpu_update_force<<<gridSize_links, blockSize_links>>>(thrust::raw_pointer_cast(d_links.data()), num_links);
     cudaDeviceSynchronize();
     
-    //updateCollisions();
+    //TODO: rewrite updateCollisions();
 
     gpu_update_voxel<<<gridSize_voxels, blockSize_voxels>>>(thrust::raw_pointer_cast(d_voxels.data()), num_voxels, dt);
     cudaDeviceSynchronize();
@@ -266,4 +274,15 @@ void TI_VoxelyzeKernel::readVoxelsPosFromDev() {
         cudaMemcpy(temp, d_links[i], sizeof(TI_Link), cudaMemcpyDeviceToHost);
         read_links.push_back(temp);
     }
+}
+
+TI_MaterialLink * TI_VoxelyzeKernel::getMaterialLink(CVX_MaterialLink* vx_mats) {
+    for (int i=0;i<h_linkMats.size();i++) {
+        if (h_linkMats[i] == vx_mats) {
+            return d_linkMats[i];
+        }
+    }
+
+    printf("ERROR: Cannot find the right link material. h_linkMats.size() %ld.\n", h_linkMats.size());
+    return NULL;
 }

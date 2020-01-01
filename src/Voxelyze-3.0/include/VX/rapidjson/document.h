@@ -1541,7 +1541,7 @@ private:
     void SetArrayRaw(GenericValue* values, SizeType count, Allocator& allocator) {
         flags_ = kArrayFlag;
         data_.a.elements = (GenericValue*)allocator.Malloc(count * sizeof(GenericValue));
-        std::memcpy(data_.a.elements, values, count * sizeof(GenericValue));
+        std::memcpy((void*)data_.a.elements, values, count * sizeof(GenericValue));
         data_.a.size = data_.a.capacity = count;
     }
 
@@ -1549,7 +1549,7 @@ private:
     void SetObjectRaw(Member* members, SizeType count, Allocator& allocator) {
         flags_ = kObjectFlag;
         data_.o.members = (Member*)allocator.Malloc(count * sizeof(Member));
-        std::memcpy(data_.o.members, members, count * sizeof(Member));
+        std::memcpy((void*)data_.o.members, members, count * sizeof(Member));
         data_.o.size = data_.o.capacity = count;
     }
 

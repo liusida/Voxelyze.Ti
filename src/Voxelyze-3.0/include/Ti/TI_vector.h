@@ -4,8 +4,10 @@
 #define TI_VECTOR_H
 
 #include <vector>
+#include "TI_Utils.h"
+
 #define VECTOR_MAX_CHUNK_SIZE 1024
-#define DEFAULT_CHUNK_SIZE 2
+#define DEFAULT_CHUNK_SIZE 2048
 template <typename T>
 class TI_vector {
 public:
@@ -62,9 +64,11 @@ public:
         return *this; 
     }
 
-    CUDA_DEVICE void push_back(T p) {
+    CUDA_DEVICE void push_back(T p, bool debug=false) {
         unsigned current_cursor;
-
+        if (debug) {
+            printf("push_back: %p num_main %d, sizeof_chunk: %d.\n", this, num_main, sizeof_chunk);
+        }
         if (flag==2) current_cursor = atomicAdd(&num_main,1);
         else current_cursor = num_main++;
         if (num_main >= sizeof_chunk) {

@@ -21,9 +21,7 @@ _stress(p->_stress)
     pVNeg = getDevPtrFromHostPtr(p->pVNeg);
     pVPos = getDevPtrFromHostPtr(p->pVPos);
 
-	gpuErrchk(cudaMalloc((void **) &mat, sizeof(TI_MaterialLink)));
-	TI_MaterialLink temp(p->mat); //TODO: don't need create a new material link every time! create a pointer!
-	gpuErrchk(cudaMemcpy(mat, &temp, sizeof(TI_MaterialLink), cudaMemcpyHostToDevice));
+	mat = k->getMaterialLink(p->mat);
 }
 
 TI_Voxel* TI_Link::getDevPtrFromHostPtr(CVX_Voxel* p) {
@@ -52,8 +50,6 @@ CUDA_DEVICE TI_Quat3D<double> TI_Link::orientLink(/*double restLength*/) //updat
 
 	angle1 = toAxisX(pVNeg->orientation());
 	angle2 = toAxisX(pVPos->orientation());
-
-	auto temp = pVPos->orientation();
 
 	TI_Quat3D<double> totalRot = angle1.Conjugate(); //keep track of the total rotation of this bond (after toAxisX())
 	pos2 = totalRot.RotateVec3D(pos2);
@@ -122,28 +118,25 @@ CUDA_DEVICE void TI_Link::updateTransverseInfo()
 
 CUDA_DEVICE void TI_Link::updateForces()
 {
+	//time start 0us
 	TI_Vec3D<double> oldPos2 = pos2, oldAngle1v = angle1v, oldAngle2v = angle2v; //remember the positions/angles from last timestep to calculate velocity
 
 	orientLink(/*restLength*/); //sets pos2, angle1, angle2
-
+	//time 87.876us
 	TI_Vec3D<double> dPos2 = 0.5*(pos2-oldPos2); //deltas for local damping. velocity at center is half the total velocity
 	TI_Vec3D<double> dAngle1 = 0.5*(angle1v-oldAngle1v);
 	TI_Vec3D<double> dAngle2 = 0.5*(angle2v-oldAngle2v);
-
+	//time 87.651us
 	//if volume effects..
 	if (!mat->isXyzIndependent() || currentTransverseStrainSum != 0) { //currentTransverseStrainSum != 0 catches when we disable poissons mid-simulation
-		
 		//updateTransverseInfo(); 
-	}
-	
-
+	}	
+	//time 110.08us
 	_stress = updateStrain((float)(pos2.x/currentRestLength));
-	
+	//time 119.13us
 	if (isFailed()){forceNeg = forcePos = momentNeg = momentPos = TI_Vec3D<double>(0,0,0); return;}
-	
-
+	//time 120.48us
 	float b1=mat->_b1, b2=mat->_b2, b3=mat->_b3, a2=mat->_a2; //local copies
-	
 	//Beam equations. All relevant terms are here, even though some are zero for small angle and others are zero for large angle (profiled as negligible performance penalty)
 	forceNeg = TI_Vec3D<double> (	_stress*currentTransverseArea, //currentA1*pos2.x,
 								b1*pos2.y - b2*(angle1v.z + angle2v.z),
@@ -177,8 +170,6 @@ CUDA_DEVICE void TI_Link::updateForces()
 
 	}
 	else setBoolState(LOCAL_VELOCITY_VALID, true); //we're good for next go-around unless something changes
-	
-
 	//	transform forces and moments to local voxel coordinates
 	if (!smallAngle){
 		forceNeg = angle1.RotateVec3DInv(forceNeg);
@@ -187,19 +178,14 @@ CUDA_DEVICE void TI_Link::updateForces()
 	forcePos = angle2.RotateVec3DInv(forcePos);
 	momentPos = angle2.RotateVec3DInv(momentPos);
 
-
-
 	toAxisOriginal(&forceNeg);
 	toAxisOriginal(&forcePos);
 	toAxisOriginal(&momentNeg);
 	toAxisOriginal(&momentPos);
-	
-
+	//time 214.72us
 
 	// assert(!(forceNeg.x != forceNeg.x) || !(forceNeg.y != forceNeg.y) || !(forceNeg.z != forceNeg.z)); //assert non QNAN
 	// assert(!(forcePos.x != forcePos.x) || !(forcePos.y != forcePos.y) || !(forcePos.z != forcePos.z)); //assert non QNAN
-
-
 }
 
 

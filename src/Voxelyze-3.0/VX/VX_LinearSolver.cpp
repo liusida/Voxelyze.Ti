@@ -32,7 +32,7 @@ CVX_LinearSolver::CVX_LinearSolver(CVoxelyze* voxelyze)
 	mnum = 1; //Which factorization to use.
 	msglvl = 1; //Print statistical information
 	error = 0; //Initialize error flag
-	int solver = 0; //use default (non-iterative) Pardiso solver
+	// int solver = 0; //use default (non-iterative) Pardiso solver
 
 	progressTick = 0;
 	progressMaxTick = 100; //never changes
@@ -69,7 +69,7 @@ bool CVX_LinearSolver::solve() //formulates and solves system!
 	iparm[0] = 0;
 	iparm[2] = -1;
 
-	int idum = 0; //Integer dummy var
+	// int idum = 0; //Integer dummy var
 
 #ifdef PARDISO_5
 	updateProgress(0.02, "Pardiso: Analyzing...");

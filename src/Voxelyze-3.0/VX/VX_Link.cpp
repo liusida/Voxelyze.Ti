@@ -76,8 +76,6 @@ Quat3D<double> CVX_Link::orientLink(/*double restLength*/) //updates pos2, angle
 	angle1 = toAxisX(pVNeg->orientation());
 	angle2 = toAxisX(pVPos->orientation());
 
-	auto temp = pVPos->orientation();
-
 	Quat3D<double> totalRot = angle1.Conjugate(); //keep track of the total rotation of this bond (after toAxisX())
 	pos2 = totalRot.RotateVec3D(pos2);
 	angle2 = totalRot*angle2;

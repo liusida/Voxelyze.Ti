@@ -5,7 +5,7 @@
         "name": "main",
         "type": "cppdbg",
         "request": "launch",
-        "program": "${workspaceFolder}/build/testOpenGL",
+        "program": "${workspaceFolder}/build/Voxelyze.Ti",
         "args": [],
         "stopAtEntry": false,
         "cwd": "${workspaceFolder}",

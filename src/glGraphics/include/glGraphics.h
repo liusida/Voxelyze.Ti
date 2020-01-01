@@ -23,7 +23,9 @@ public:
     ~glGraphics();
     bool running();
     int init();
-    void draw( const std::vector<float> &points );
+    void clear();
+    void draw( const std::vector<float> &points, bool GPU=1);
+    void swap();
 
     static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
     void processInput();
@@ -31,7 +33,7 @@ public:
     const unsigned int SCR_WIDTH = 800;
     const unsigned int SCR_HEIGHT = 600;
      GLFWwindow* window;
-     Shader ourShader;
+     Shader gpuShader, cpuShader;
      unsigned int VAO, VBO, EBO;
 
 };

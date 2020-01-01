@@ -6,61 +6,101 @@
 #include "Voxelyze.h"
 #include "TI_VoxelyzeKernel.h"
 
-using namespace std;
+#define GPU
+// #define CPU
 
 int main(int argc, char** argv) {
 	glGraphics g;
     g.init();
-    
-    int steps = 5000;
-    if (argc>=2) {
-        steps = strtol (argv[1],NULL,10);
-        debugHost( printf("steps: %d", steps) );
-    }
     CVoxelyze Vx(0.005); //5mm voxels
     Vx.enableFloor();
     Vx.enableCollisions();
     Vx.setGravity();
     CVX_Material* pMaterial = Vx.addMaterial(1000000, 1000); //A material with stiffness E=1MPa and density 1000Kg/m^3
-    for (int i=0;i<3;i++) {
-        for (int j=0;j<4;j++) {
-            for (int k=0;k<5;k++) {
-                CVX_Voxel* v = Vx.setVoxel(pMaterial, i,j,k+1);
+    for (int i=0;i<20;i++) {
+        for (int j=0;j<20;j++) {
+            for (int k=0;k<20;k++) {
+                CVX_Voxel* v = Vx.setVoxel(pMaterial, i,j,k+10);
             }
         }
     }
+    Vx.voxel(0)->external()->setForce(Vec3D<float>(1,0,0));
+
+    // for (int i=0;i<7;i++) {
+    //     for (int j=0;j<7;j++) {
+    //         for (int k=0;k<7;k++) {
+    //             CVX_Voxel* v = Vx.setVoxel(pMaterial, i,j-8,k+10);
+    //         }
+    //     }
+    // }
+
+    #ifdef GPU
     TI_VoxelyzeKernel VxKernel(&Vx);
+    #endif
+
+    #ifdef GPU
+    printf("GPU enabled.\n");
+    #endif
+    
+    #ifdef CPU
+    printf("CPU enabled.\n");
+    #endif
+
+    double time_step = Vx.recommendedTimeStep();
+    printf("time_step %f.\n", time_step);
+
     unsigned j=0;
 	while(g.running()) {
-        for (int i=0;i<50;i++) 
+        for (int i=0;i<200;i++) 
         {
-            VxKernel.doTimeStep(0.00001);
+            #ifdef GPU
+            VxKernel.doTimeStep(time_step);
+            #endif
+            #ifdef CPU
+            bool ret = Vx.doTimeStep(time_step);
+            if (!ret) {debugHost( printf("ERROR: Vx doTimeStep return false!") );break;}
+            #endif
         }
-        // bool ret = Vx.doTimeStep(0.00001);
-        // if (!ret) {debugHost( printf("ERROR: Vx doTimeStep return false!") );break;}
-        
+        #ifdef GPU
         VxKernel.readVoxelsPosFromDev();
-        std::vector<float> vertices;
+        #endif
+
+        g.clear();
+
+        #ifdef GPU
+        std::vector<float> vertices_gpu;
         for (auto v:VxKernel.read_voxels) {
-        // for (auto v:*Vx.voxelList()) {
-            vertices.push_back(v->pos.y*20);
-            vertices.push_back(v->pos.z*20);
-            vertices.push_back(0.0f);
+            vertices_gpu.push_back(v->pos.y*10+0.35);
+            vertices_gpu.push_back(v->pos.z*10);
+            vertices_gpu.push_back(0.0f);
         }
+        g.draw(vertices_gpu,1);
+        #endif
 
-        g.draw(vertices);
-
-        if (j++>1000) {
-            j=0;
-            for (unsigned i=0;i<3;i++) {
-                TI_Voxel* temp = VxKernel.read_voxels[i];
-                debugDev( printf("[%d] Dev Position: %e, %e, %e", i, temp->pos.x, temp->pos.y, temp->pos.z) );
-        
-            }
-            for (unsigned i=0;i<3;i++) {
-                CVX_Voxel* temp = Vx.voxel(i);
-                debugHost( printf("[%d] Dev Position: %e, %e, %e", i, temp->pos.x, temp->pos.y, temp->pos.z) );
-            }
+        #ifdef CPU
+        std::vector<float> vertices_cpu;
+        for (auto v:*(Vx.voxelList())) {
+            vertices_cpu.push_back(v->pos.y*10-0.35);
+            vertices_cpu.push_back(v->pos.z*10);
+            vertices_cpu.push_back(0.0f);
         }
-	}
+        g.draw(vertices_cpu,0);
+        #endif
+
+        g.swap();
+
+        if (j++>100) break;
+    }
+    #ifdef GPU
+    for (unsigned i=0;i<3;i++) {
+        TI_Voxel* temp = VxKernel.read_voxels[i];
+        debugDev( printf("[%d] Dev Position: %e, %e, %e", i, temp->pos.x, temp->pos.y, temp->pos.z) );
+    }
+    #endif
+    #ifdef CPU
+    for (unsigned i=0;i<3;i++) {
+        CVX_Voxel* temp = Vx.voxel(i);
+        debugHost( printf("[%d] Host Position: %e, %e, %e", i, temp->pos.x, temp->pos.y, temp->pos.z) );
+    }
+    #endif
 }

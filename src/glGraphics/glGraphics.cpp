@@ -35,7 +35,8 @@ int glGraphics::init() {
 
     // build and compile our shader zprogram
     // ------------------------------------
-    ourShader.load("src/glGraphics/simple.vs", "src/glGraphics/simple.fs");
+    gpuShader.load("src/glGraphics/simple.vs", "src/glGraphics/simple1.fs");
+    cpuShader.load("src/glGraphics/simple.vs", "src/glGraphics/simple.fs");
 
     glGenVertexArrays(1, &VAO);  
     glGenBuffers(1, &VBO);  
@@ -53,13 +54,18 @@ void glGraphics::processInput() {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 }
-void glGraphics::draw( const std::vector<float> &points ) {
+void glGraphics::clear() {
     // render
     // ------
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
+}
+void glGraphics::draw( const std::vector<float> &points , bool GPU) {
     // activate shader
-    ourShader.use();
+    if (GPU)
+        gpuShader.use();
+    else
+        cpuShader.use();
 
     // ..:: Initialization code (done once (unless your object frequently changes)) :: ..
     // 1. bind Vertex Array Object
@@ -75,7 +81,8 @@ void glGraphics::draw( const std::vector<float> &points ) {
 
     glBindVertexArray(VAO);
     glDrawArrays(GL_POINTS, 0, int(points.size()/3));
-
+}
+void glGraphics::swap() {
     // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
     // -------------------------------------------------------------------------------
     glfwSwapBuffers(window);
