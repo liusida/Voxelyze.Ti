@@ -32,9 +32,6 @@ endif()
 ################################
 # Normal Libraries & Executables
 ################################
-# add_subdirectory(src/project1)
-# include_directories(${project1_SOURCE_DIR}/include ${project1_SOURCE_DIR})
-
 add_subdirectory(src/glGraphics)
 include_directories(${glGraphics_SOURCE_DIR}/include ${glGraphics_SOURCE_DIR})
 
