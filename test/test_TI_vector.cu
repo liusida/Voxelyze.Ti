@@ -4,6 +4,9 @@
 #include <time.h>
 
 #include "TI_vector.h"
+
+#ifdef _0
+
 __global__ void test_time() {
   TI_vector<int> v;
   for (int i=0;i<100;i++)
@@ -95,3 +98,4 @@ TEST_F(TIVectorTest, init) {
     EXPECT_EQ(b[0], 1);
     EXPECT_EQ(b[1], 2);
 }
+#endif

@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.10)
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
+# export CPLUS_INCLUDE_PATH=/usr/local/cuda/include
+# 
+# set(CPLUS_INCLUDE_PATH "/usr/local/cuda/include")
+# include_directories(${CPLUS_INCLUDE_PATH})
 
 # Options. Turn on with 'cmake -Dmyvarname=ON'.
 option(test "Build all tests." ON) # Makes boolean 'test' available.
